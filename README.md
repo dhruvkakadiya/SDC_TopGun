@@ -1,4 +1,4 @@
-# Self_Driving_Car_TopGun
+# Self Driving Car TopGun
 Self driving car with 5 CAN bus nodes.
 This project contains 5 different controller codes for different functionality.
 1) Master controller
