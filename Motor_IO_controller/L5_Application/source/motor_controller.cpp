@@ -23,7 +23,7 @@
 #define DC_NORMAL           6.4
 #define DC_TURBO            6.0
 
-extern can_msg_t message2;
+can_msg_t motor_msg;
 
 //As per waveform and real testing(percent range - 6.0(right) - 7.5(center) - 9.3(left))
 //As per waveform only(percent range - 5.5(forward) - 8.5(stop) - 10.5(backward))
@@ -59,7 +59,7 @@ void motor_init(void){
 
 void set_motors_pwm(void) {
 
-    motor_direction *md1= (motor_direction*) &message2.data.qword; // Copy received CAN msg into proper data structure
+    motor_direction *md1= (motor_direction*) &motor_msg.data.qword; // Copy received CAN msg into proper data structure
 
     // XXX: Let the master controller provide gradients, such as:
     // 0-10 for back motor
@@ -120,10 +120,8 @@ void drive_TopGun(void) {
      *
      *  set_motors_pwm();
      */
-    if(receive_data()){
-        if(message2.msg_id == MOTOR_DIRECTIONS_ID) {  // Check if got motor_direction message
+    if(receive_data()){                                 // Check if got motor_direction message
                set_motors_pwm();
-        }
     }
     else{
         MotorControl.setDC(DC_STOP);

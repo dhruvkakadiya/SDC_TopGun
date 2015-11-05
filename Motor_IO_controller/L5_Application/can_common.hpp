@@ -50,7 +50,7 @@ typedef enum {
         (error_flag)? LE.on(ERROR_LED): LE.off(ERROR_LED);
 
 bool test_data(can_msg_t can_message);
-bool transmit_data();
+bool transmit_data(can_msg_t transmit_msg);
 bool receive_data();
 void can_tx_init(void);
 void can_rx_init(void);

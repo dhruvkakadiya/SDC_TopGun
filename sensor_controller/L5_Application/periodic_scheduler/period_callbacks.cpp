@@ -30,48 +30,28 @@
 
 #include <stdint.h>
 #include "periodic_callback.h"
-//#include "can_common.hpp"
 #include "sensor_controller.hpp"
-#define sensor_controller 1
-#define master_controller 0
+
 /// This is the stack size used for each of the period tasks
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 
 void period_1Hz(void)
 {
     check_bus_off();
-    //get_sensor_data();
-    //sensor_task1();
-    //LE.toggle(1);
-    //sensor_task_1hz();
-    //can_world_task();
 }
 
 void period_10Hz(void)
 {
-    //motor_task1();
-#if sensor_controller
-    //get_ultrasonic_data();
     get_sensor_data();
-    //sensor_task1();
     can_sensor_tx_task();
-#endif
-    //can_motor_rx_task();
-    //LE.toggle(2);
-    //drive_car();
-    //sensor_task_10hz();
 }
 
 void period_100Hz(void)
 {
-#if master_controller
-    can_master_rx_task();
-    can_master_tx_task();
-#endif
-    //LE.toggle(3);
+
 }
 
 void period_1000Hz(void)
 {
-    //LE.toggle(4);
+
 }

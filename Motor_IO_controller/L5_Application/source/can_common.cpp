@@ -5,24 +5,30 @@
  */
 
 #include "can_common.hpp"
-#define BUS_OFF_LED             1
-can_msg_t message1,message2,tmp_can_message;
+#define BUS_OFF_LED                     1
+#define RECEIVE_CAN_MOTOR_IO_QUEUE      5
+#define TRANSMIT_CAN_MOTOR_IO_QUEUE     5
+
+can_msg_t no_motor_msg,tmp_can_msg;
+extern can_msg_t motor_msg;
 
 static bool bus_off_state = false;
 
 bool test_data(can_msg_t can_message){
-    if(can_message.data.qword == tmp_can_message.data.qword){
+    if(can_message.data.qword == tmp_can_msg.data.qword){
         return false;
     }
     else {
-        tmp_can_message = can_message;
+        tmp_can_msg = can_message;
         return true;
     }
 }
 
-bool transmit_data(){
-    if(test_data(message1)) {
-        if(false == CAN_tx(can1, &message1, 0)) {
+bool transmit_data(can_msg_t transmit_msg){
+    transmit_msg.frame_fields.is_29bit = 0;
+    transmit_msg.frame_fields.data_len = 8;
+    if(test_data(transmit_msg)) {
+        if(false == CAN_tx(can1, &transmit_msg, 0)) {
             //SET_ERROR(ERROR_TX_FAILED);
             LOG_ERROR("CAN_tx failed\n");
             return false;
@@ -36,21 +42,23 @@ bool transmit_data(){
 
 bool receive_data(){
     // XXX: Receive to a message
-    can_msg_t msg;
-    if(false == CAN_rx(can1, &msg, 0)) {
+    can_msg_t received_msg;
+    if(false == CAN_rx(can1, &received_msg, 0)) {
         //SET_ERROR(ERROR_TX_FAILED);
         LOG_ERROR("CAN_rx failed\n");
         return false;
     }
     else {
-        if (msg.msg_id == MOTOR_DIRECTIONS_ID) {
-            motor_ctlr_msg = msg;
+        if (received_msg.msg_id == MOTOR_DIRECTIONS_ID) {
+            motor_msg = received_msg;
+        }
+        else{
+            motor_msg = no_motor_msg;
         }
         return true;
     }
 }
 
-#if 1
 static void can_bus_off_callback(uint32_t dummy)
 {
     bus_off_state = true;
@@ -66,14 +74,11 @@ void check_bus_off(void)
         LE.set(BUS_OFF_LED, false);
     }
 }
-#endif
 
 void can_tx_init(void) {
     LE.init();
     CAN_init(can1,100,1,5,can_bus_off_callback,0);
     LOG_INFO("CAN1 is initialized\n");
-    message1.frame_fields.is_29bit = 0;
-    message1.frame_fields.data_len = 8;
 }
 
 void can_rx_init(void) {
@@ -85,6 +90,8 @@ void can_rx_init(void) {
 }
 
 void can_init(void) {
+    no_motor_msg.data.bytes[0] = (uint8_t) 0 ;      // Stop speed
+    no_motor_msg.data.bytes[1] = (uint8_t) 2 ;      // Straight direction
     can_tx_init();
     can_rx_init();
     CAN_reset_bus(can1);
