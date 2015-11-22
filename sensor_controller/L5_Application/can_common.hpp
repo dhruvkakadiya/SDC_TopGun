@@ -13,9 +13,23 @@
 #include "file_logger.h"
 #include "can_msg_id.hpp"
 
-#define ERROR_LED 1
-#define CAN_RX_LED      2
-#define CAN_TX_LED      3
+#define SENSOR_CNTL_CANBUS               (can1)      // Use can1
+#define SENSOR_CNTL_CANBAUD              (100)       // 100kbps baud rate
+#define SENSOR_CNTL_CANTXQ               ( 50 )       // Transmit q size 5
+#define SENSOR_CNTL_CANRXQ               ( 10 )       // Receive q size 5
+#define SENSOR_CNTL_CAN_TIMEOUT          ( 0 )       // Timeout for sending can message
+#define SENSOR_CNTL_SYNC_TIME            ( 500 )     // Allow 500 ms wait for ack
+#define SENSOR_CNTL_SYNC_MAX_TIME        ( GEO_CNTL_SYNC_TIME * 20 ) // Wait 10s max
+#define SENSOR_INIT_LED_TIME             ( 500 )
+
+#define SENSOR_CAN_ERR_LED               ( 4 )
+#define RESET                            ( 4)
+#define BUS_OFF_LED                      ( 4 )
+#define SENSOR_HB_LED                    ( 4 )
+
+#define ERROR_LED       4
+#define CAN_RX_LED      4
+#define CAN_TX_LED      4
 
 /* basic structure to create/store 11bit CAN msg id,
  * used for creating filter list and for creating 11bit ids
@@ -49,26 +63,12 @@ typedef enum {
         error_flag &= ~(error_code); \
         (error_flag)? LE.on(ERROR_LED): LE.off(ERROR_LED);
 
+bool can_init(void);
 bool test_data(can_msg_t can_message);
 bool transmit_data(can_msg_t send_message);
 bool receive_data();
-void can_tx_init(void);
-void can_rx_init(void);
-void can_init(void);
 void check_bus_off(void);
-//void master_can_sensor_rx_task(void);
-//void can_motor_rx_task(void);
-//void can_sensor_tx_task(void);
-//void can_master_rx_task(void);
-//void can_master_tx_task(void);
-
-class Heartbeat: public scheduler_task {
-    private:
-        can_msg_t heart_tx_message,heart_rx_message;
-    public:
-        Heartbeat(uint8_t priority);
-        bool init(void);
-        bool run(void *p);
-};
+void sensor_send_heartbeat(void);
+void sensor_get_master_reset(void);
 
 #endif

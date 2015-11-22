@@ -1,0 +1,137 @@
+VERSION ""
+
+
+NS_ : 
+	NS_DESC_
+	CM_
+	BA_DEF_
+	BA_
+	VAL_
+	CAT_DEF_
+	CAT_
+	FILTER
+	BA_DEF_DEF_
+	EV_DATA_
+	ENVVAR_DATA_
+	SGTYPE_
+	SGTYPE_VAL_
+	BA_DEF_SGTYPE_
+	BA_SGTYPE_
+	SIG_TYPE_REF_
+	VAL_TABLE_
+	SIG_GROUP_
+	SIG_VALTYPE_
+	SIGTYPE_VALTYPE_
+	BO_TX_BU_
+	BA_DEF_REL_
+	BA_REL_
+	BA_DEF_DEF_REL_
+	BU_SG_REL_
+	BU_EV_REL_
+	BU_BO_REL_
+	SG_MUL_VAL_
+
+BS_:
+
+BU_: NOONE SENSOR DRIVER MOTORIO BLUETOOTH GEO
+
+BO_ 0 DRIVER_KILL_SWITCH: 0 DRIVER
+ SG_ DRIVER_KILL_SWITCH_cmd 		: 0|0@1+ (1,0) [0|0] "" SENSOR,MOTORIO,BLUETOOTH,GEO
+
+BO_ 1 DRIVER_RESET: 0 DRIVER
+ SG_ DRIVER_RESET_cmd 				: 0|0@1+ (1,0) [0|0] "" SENSOR,MOTORIO,BLUETOOTH,GEO
+
+BO_ 2 DRIVER_SYNC_ACK: 0 DRIVER
+ SG_ DRIVER_SYNC_ACK_cmd 			: 0|0@1+ (1,0) [0|0] "" SENSOR,MOTORIO,BLUETOOTH,GEO
+
+BO_ 3 MOTORIO_SYNC: 0 MOTORIO
+ SG_ MOTORIO_SYNC_cmd 				: 0|0@1+ (1,0) [0|0] "" DRIVER
+
+BO_ 4 SENSOR_SYNC: 0 SENSOR
+ SG_ SENSOR_SYNC_cmd 				: 0|0@1+ (1,0) [0|0] "" DRIVER
+
+BO_ 5 BLUETOOTH_SYNC: 0 BLUETOOTH
+ SG_ BLUETOOTH_SYNC_cmd 			: 0|0@1+ (1,0) [0|0] "" DRIVER
+
+BO_ 6 GEO_SYNC: 0 GEO
+ SG_ GEO_SYNC_cmd 					: 0|0@1+ (1,0) [0|0] "" DRIVER
+
+BO_ 7 MOTORIO_HEARTBEAT: 0 MOTORIO
+ SG_ MOTORIO_HEARTBEAT_cmd 			: 0|0@1+ (1,0) [0|0] "" DRIVER
+
+BO_ 8 SENSOR_HEARTBEAT: 0 SENSOR
+ SG_ SENSOR_HEARTBEAT_cmd 			: 0|0@1+ (1,0) [0|0] "" DRIVER
+
+BO_ 9 BLUETOOTH_HEARTBEAT: 0 BLUETOOTH
+ SG_ BLUETOOTH_HEARTBEAT_cmd 		: 0|0@1+ (1,0) [0|0] "" DRIVER
+
+BO_ 10 GEO_HEARTBEAT: 0 GEO
+ SG_ GEO_HEARTBEAT_cmd 				: 0|0@1+ (1,0) [0|0] "" DRIVER
+
+BO_ 11 MOTORIO_RUNMODE: 1 DRIVER
+ SG_ MOTORIO_RUNMODE_cmd 			: 0|8@1+ (1,0) [0|3] "" MOTORIO
+
+BO_ 12 SENSOR_SONARS: 6 SENSOR
+ SG_ SENSOR_SONARS_front_left 		: 0|8@1+ (1,0) [0|4] "" DRIVER,MOTORIO
+ SG_ SENSOR_SONARS_front_right 		: 8|8@1+ (1,0) [0|4] "" DRIVER,MOTORIO
+ SG_ SENSOR_SONARS_front_center 	: 16|8@1+ (1,0) [0|4] "" DRIVER,MOTORIO
+ SG_ SENSOR_SONARS_left 			: 24|8@1+ (1,0) [0|4] "" DRIVER,MOTORIO
+ SG_ SENSOR_SONARS_right 			: 32|8@1+ (1,0) [0|4] "" DRIVER,MOTORIO
+ SG_ SENSOR_SONARS_back 			: 40|8@1+ (1,0) [0|4] "" DRIVER,MOTORIO
+
+BO_ 13 MOTORIO_DIRECTION: 2 DRIVER
+ SG_ MOTORIO_DIRECTION_speed_cmd 	: 0|8@1+ (1,0) [0|4] "" MOTORIO
+ SG_ MOTORIO_DIRECTION_turn_cmd 	: 8|8@1+ (1,0) [0|5] "" MOTORIO
+
+BO_ 14 DRIVER_CHECKPOINT_REQ: 1 DRIVER
+ SG_ DRIVER_CHECKPOINT_REQ_cmd 		: 0|8@1+ (1,0) [0|3] "" BLUETOOTH,MOTORIO
+
+BO_ 15 BLUETOOTH_CHECKPOINT_SEND: 1 BLUETOOTH
+ SG_ BLUETOOTH_CHECKPOINT_SEND_cmd 	: 0|8@1+ (1,0) [0|3] "" DRIVER,MOTORIO
+
+BO_ 16 BLUETOOTH_CHECKPOINT_DATA: 1 BLUETOOTH
+ SG_ BLUETOOTH_CHECKPOINT_DATA_cmd 	: 0|8@1+ (1,0) [0|3] "" DRIVER,MOTORIO
+
+BO_ 17 DRIVER_LOC_UPDATE: 8 DRIVER
+ SG_ DRIVER_LOC_UPDATE_LAT_cmd 		: 0|32@1+ (0.0001,0) [0|0] "" GEO,MOTORIO
+ SG_ DRIVER_LOC_UPDATE_LONG_cmd 	: 32|32@1+ (0.0001,0) [0|0] "" GEO,MOTORIO
+
+BO_ 18 GEO_SPEED_ANGLE: 5 GEO
+ SG_ GEO_SPEED_cmd 					: 0|8@1+ (1,0) [0|0] "" DRIVER,MOTORIO
+ SG_ GEO_ANGLE_heading_cmd 			: 8|16@1+ (1,0) [0|0] "" DRIVER,MOTORIO
+ SG_ GEO_ANGLE_bearing_cmd 			: 24|16@1+ (1,0) [0|0] "" DRIVER,MOTORIO
+
+BO_ 19 GEO_LOC_DATA: 8 GEO
+ SG_ GEO_LOC_LAT_cmd 				: 0|32@1+ (0.0001,0) [0|0] "" DRIVER,MOTORIO
+ SG_ GEO_LOC_LONG_cmd 				: 32|32@1+ (0.0001,0) [0|0] "" DRIVER,MOTORIO
+
+BO_ 20 SENSOR_LIGHT_BAT: 2 SENSOR
+ SG_ SENSOR_LIGHT_cmd 				: 0|8@1+ (1,0) [0|1] "" DRIVER,MOTORIO
+ SG_ SENSOR_BAT_cmd 				: 8|8@1+ (1,0) [0|1] "" DRIVER,MOTORIO
+
+
+CM_ BU_ NOONE "No node, used to indicate if it's a debug message going to no one";
+CM_ BU_ DRIVER "The driver controller driving the car";
+CM_ BU_ SENSOR "The sensor controller of the car";
+CM_ BU_ MOTORIO "The motor_io controller of the car";
+CM_ BU_ BLUETOOTH "The bluetooth controller of the car";
+CM_ BU_ GEO "The geo controller of the car";
+CM_ BO_ 2 "Sync message used to synchronize the controllers";
+
+BA_DEF_  "BusType" STRING ;
+BA_DEF_ SG_ "FieldType" STRING ;
+BA_DEF_ BO_ "GenMsgCycleTime" INT 0 0;
+
+BA_DEF_DEF_ "BusType" "CAN";
+BA_DEF_DEF_ "FieldType" "";
+
+BA_ "GenMsgCycleTime" BO_ 7 	1;
+BA_ "GenMsgCycleTime" BO_ 8 	1;
+BA_ "GenMsgCycleTime" BO_ 9 	1;
+BA_ "GenMsgCycleTime" BO_ 10 	1;
+BA_ "GenMsgCycleTime" BO_ 11 	1;
+BA_ "GenMsgCycleTime" BO_ 12 	10;
+BA_ "GenMsgCycleTime" BO_ 13 	10;
+BA_ "GenMsgCycleTime" BO_ 17 	10;
+BA_ "GenMsgCycleTime" BO_ 18 	10;
+BA_ "GenMsgCycleTime" BO_ 19 	10;

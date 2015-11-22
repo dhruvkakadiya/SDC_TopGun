@@ -16,6 +16,7 @@
 #include "can_common.hpp"
 #include <stdio.h>
 
+
 class MotorController : public SingletonTemplate<MotorController>
 {
     public:
@@ -37,8 +38,19 @@ class MotorController : public SingletonTemplate<MotorController>
 
 #define MotorControl MotorController::getInstance()
 
+#ifdef __cplusplus
+extern "C"{
+#endif
+
 void set_motors_pwm(void);
 void motor_init(void);
 void drive_TopGun(void);
+void motor_send_heartbeat(void);
+void motor_check_master_reset(void);
+bool check_validity_speed_factor(float s_factor, int speed );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* L5_APPLICATION_MOTOR_CONTROLLER_HPP_ */

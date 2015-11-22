@@ -64,7 +64,17 @@ periodicSchedulerTask::periodicSchedulerTask(void) :
     xTaskCreate(period_task_100Hz, "100Hz", PERIOD_TASKS_STACK_SIZE_BYTES/4, NULL, PRIORITY_CRITICAL + 3, NULL);
     xTaskCreate(period_task_1000Hz, "1000Hz", PERIOD_TASKS_STACK_SIZE_BYTES/4, NULL, PRIORITY_CRITICAL + 4, NULL);
 }
+#if 1
+bool periodicSchedulerTask::init(void)
+{
+    return period_init();
+}
 
+bool periodicSchedulerTask::regTlm(void)
+{
+    return period_reg_tlm();
+}
+#endif
 bool periodicSchedulerTask::run(void *p)
 {
     if (handlePeriodicSemaphore(prd_1000Hz, 1)) {           // Run 1000hz each time

@@ -27,7 +27,6 @@
 #include "periodic_callback.h"
 
 
-
 enum {
     prd_1Hz = 0,
     prd_10Hz,
@@ -63,6 +62,16 @@ periodicSchedulerTask::periodicSchedulerTask(void) :
     xTaskCreate(period_task_10Hz, "10Hz", PERIOD_TASKS_STACK_SIZE_BYTES/4, NULL, PRIORITY_CRITICAL + 2, NULL);
     xTaskCreate(period_task_100Hz, "100Hz", PERIOD_TASKS_STACK_SIZE_BYTES/4, NULL, PRIORITY_CRITICAL + 3, NULL);
     xTaskCreate(period_task_1000Hz, "1000Hz", PERIOD_TASKS_STACK_SIZE_BYTES/4, NULL, PRIORITY_CRITICAL + 4, NULL);
+}
+
+bool periodicSchedulerTask::init(void)
+{
+    return period_init();
+}
+
+bool periodicSchedulerTask::regTlm(void)
+{
+    return period_reg_tlm();
 }
 
 bool periodicSchedulerTask::run(void *p)
