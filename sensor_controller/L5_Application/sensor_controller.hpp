@@ -41,9 +41,6 @@ typedef struct Sensor {
 
 void read_sensor_data1(Sensor* s1,int port_no,int pin_no);
 void read_sensor_data1(Sensor* s1,int port_trigger, int trigger_pin,int port_echo, int echo_pin);
-void get_sensor_data(void);
-void can_sensor_tx_task(void);
-void ultra_sensor_init();
-void get_ultrasonic_data();
+void send_sensor_data(void);
 
 #endif /* L5_APPLICATION_SENSOR_CONTROLLER_HPP_ */
