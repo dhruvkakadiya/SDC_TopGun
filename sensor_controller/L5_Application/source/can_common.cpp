@@ -6,6 +6,7 @@
 
 #include "can_common.hpp"
 
+#define SAME_DATA_TRANSMISSION      1
 can_msg_t received_msg,tmp_can_message;
 
 static bool bus_off_state = false;
@@ -61,7 +62,7 @@ bool test_data(can_msg_t can_message){
 bool transmit_data(can_msg_t send_message){
     send_message.frame_fields.is_29bit = 0;
     send_message.frame_fields.data_len = 8;       // Send 8 bytes
-    if(test_data(send_message) || 1) {
+    if(test_data(send_message) || SAME_DATA_TRANSMISSION) {
         if(false == CAN_tx(SENSOR_CNTL_CANBUS, &send_message, 0)) {
             LOG_ERROR("CAN_tx failed\n");
             return false;
@@ -153,4 +154,32 @@ bool powerup_sync_sensor_controller( void )
 #endif
 
     return sync_ack;
+}
+
+void sensor_send_heartbeat( void )
+{
+    // Heart Beat to Master
+    can_msg_t heartbeat_sensor_msg; // Can Message
+    bool can_status = false;
+
+    heartbeat_sensor_msg.msg_id = GEO_HEARTBEAT_ID; // Sensor Heartbeat ID
+    heartbeat_sensor_msg.frame_fields.is_29bit = 0;
+    heartbeat_sensor_msg.frame_fields.data_len = 0;
+
+    can_status = CAN_tx(SENSOR_CNTL_CANBUS, &heartbeat_sensor_msg, SENSOR_CNTL_CAN_TIMEOUT);
+
+    if( !can_status )
+    {
+        LOG_ERROR("ERROR!!! Sensor controller Heartbeat message not sent!!");
+        LE.off(SENSOR_HB_LED);
+    }
+    else
+    {
+        LE.toggle(SENSOR_HB_LED);
+    }
+
+    if(bus_off_state) {
+        CAN_reset_bus(SENSOR_CNTL_CANBUS);
+        bus_off_state = false;
+    }
 }

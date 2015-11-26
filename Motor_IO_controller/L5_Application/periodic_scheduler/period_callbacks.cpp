@@ -37,9 +37,14 @@
 #include "tlm/c_tlm_comp.h"
 #include "tlm/c_tlm_var.h"
 
+#define HEARTBEAT           0
 /// This is the stack size used for each of the period tasks
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
 extern can_msg_t motor_msg;
+extern int light_threshold;
+extern int dc_slow_count;
+extern int dc_normal_count;
+extern int dc_turbo_count;
 
 /// Called once before the RTOS is started, this is a good place to initialize things once
 bool period_init(void)
@@ -60,12 +65,20 @@ bool period_reg_tlm(void)
 {
     // Make sure "SYS_CFG_ENABLE_TLM" is enabled at sys_config.h to use Telemetry
     tlm_component* comp = tlm_component_add("MOTORIO");
-    TLM_REG_VAR(comp, motor_msg,tlm_char); // Macro to register received motor_msg
+
+    TLM_REG_VAR(comp, motor_msg,tlm_char);          // Macro to register received motor_msg
+    TLM_REG_VAR(comp, light_threshold,tlm_int);     // Light threshold value for RPM sensor
+    TLM_REG_VAR(comp, dc_slow_count,tlm_int);       // Encoder count for dc_slow
+    TLM_REG_VAR(comp, dc_normal_count,tlm_int);     // Encoder count for dc_normal
+    TLM_REG_VAR(comp, dc_turbo_count,tlm_int);      // Encoder count for dc_turbo
     return true; // Must return true upon success
 }
 
 void period_1Hz(void)
 {
+#if HEARTBEAT
+    motor_io_send_heartbeat();  // Send Heartbeat to Master controller
+#endif
     check_bus_off();            // To check if CAN bus off is there then RESET the CAN bus
 }
 

@@ -17,9 +17,9 @@
 #define FRONT_RIGHT_LED         3
 #define SENSOR_LED_INDICATION   1
 
-#define FAR_RANGE               200
-#define MID_RANGE               110
-#define NEAR_RANGE              60
+#define FAR_RANGE               220
+#define MID_RANGE               130
+#define NEAR_RANGE              80
 
 QueueHandle_t sensor_task= xQueueCreate(10,sizeof(dist_sensor));
 can_msg_t sensor_can_msg;

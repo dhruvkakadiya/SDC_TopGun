@@ -92,7 +92,7 @@ bool transmit_data(can_msg_t transmit_msg){
 
 // Receive data over CAN
 bool receive_data(){
-
+    // XXX: This should be a while loop to empty the CAN receive queues
     if(false == CAN_rx(MOTORIO_CNTL_CANBUS, &received_msg, 0)) {
         //SET_ERROR(ERROR_TX_FAILED);
         //LOG_ERROR("CAN_rx failed\n");
