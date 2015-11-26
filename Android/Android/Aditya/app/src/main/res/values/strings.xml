@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">RCCarNavigator</string>
+    <string name="title_activity_maps">Map</string>
+    <string name="sourceButton">Source</string>
+    <string name="destButton">Destination</string>
+    <string name="sendButton">Send!</string>
+    <string name="routeButton">Route!</string>
+    <string name="clearButton">Clear</string>
+</resources>

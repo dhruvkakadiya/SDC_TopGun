@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="utf-8"?>
+<items version="2" >
+
+    <item
+        jar="/Users/strangelyhuman/Desktop/Cmpe240_autonomous_car_Fall15/Android/Aditya/app/build/intermediates/exploded-aar/com.google.android.gms/play-services-nearby/7.8.0/jars/classes.jar"
+        jumboMode="false"
+        revision="23.0.1"
+        sha1="adebe28e0c0c05d34a3bfd76f3275bf4d8ff87b6">
+        <dex dex="/Users/strangelyhuman/Desktop/Cmpe240_autonomous_car_Fall15/Android/Aditya/app/build/intermediates/pre-dexed/debug/classes-43500b687d456cdf5a3cb131ecb605e3c88ad359.jar" />
+    </item>
+    <item
+        jar="/Users/strangelyhuman/android-sdks/extras/android/m2repository/com/android/support/support-annotations/23.0.1/support-annotations-23.0.1.jar"
+        jumboMode="false"
+        revision="23.0.1"
+        sha1="1fce89a6428c51467090d7f424e4c9c3dbd55f7e">
+        <dex dex="/Users/strangelyhuman/Desktop/Cmpe240_autonomous_car_Fall15/Android/Aditya/app/build/intermediates/pre-dexed/debug/support-annotations-23.0.1-6db23b664fde7049eb312275402b8406e6c92242.jar" />
+    </item>
+    <item
+        jar="/Users/strangelyhuman/Desktop/Cmpe240_autonomous_car_Fall15/Android/Aditya/app/build/intermediates/exploded-aar/com.google.android.gms/play-services-vision/7.8.0/jars/classes.jar"
+        jumboMode="false"
+        revision="23.0.1"
+        sha1="b99f0b78bbcb76b915bc6529a83b65d4d46990dd">
+        <dex dex="/Users/strangelyhuman/Desktop/Cmpe240_autonomous_car_Fall15/Android/Aditya/app/build/intermediates/pre-dexed/debug/classes-2ca16e3e98de04c43051195e6bafe96f1bfb0e4a.jar" />
+    </item>
+    <item
+        jar="/Users/strangelyhuman/Desktop/Cmpe240_autonomous_car_Fall15/Android/Aditya/app/build/intermediates/exploded-aar/com.google.android.gms/play-services-plus/7.8.0/jars/classes.jar"
+        jumboMode="false"
+        revision="23.0.1"
+        sha1="2491ae1b2a848af1f4f0c795f3117c1bd6a1989f">
+        <dex dex="/Users/strangelyhuman/Desktop/Cmpe240_autonomous_car_Fall15/Android/Aditya/app/build/intermediates/pre-dexed/debug/classes-f813772403e652c8d2835bf2f523303f1bc7655f.jar" />
+    </item>
+    <item
+        jar="/Users/strangelyhuman/Desktop/Cmpe240_autonomous_car_Fall15/Android/Aditya/app/build/intermediates/exploded-aar/com.android.support/support-v4/23.0.1/jars/libs/internal_impl-23.0.1.jar"
+        jumboMode="false"
+        revision="23.0.1"
+        sha1="aa92916125166649d8ad4ba3940c3dd7515596d3">
+        <dex dex="/Users/strangelyhuman/Desktop/Cmpe240_autonomous_car_Fall15/Android/Aditya/app/build/intermediates/pre-dexed/debug/internal_impl-23.0.1-05d2c779e79f830a9a0d4d886331a4fa6029996b.jar" />
+    </item>
+    <item
+        jar="/Users/strangelyhuman/Desktop/Cmpe240_autonomous_car_Fall15/Android/Aditya/app/build/intermediates/exploded-aar/com.google.android.gms/play-services-identity/7.8.0/jars/classes.jar"
+        jumboMode="false"
+        revision="23.0.1"
+        sha1="d11330ea68c0d964d30d5caed1f27e6b1488b189">
+        <dex dex="/Users/strangelyhuman/Desktop/Cmpe240_autonomous_car_Fall15/Android/Aditya/app/build/intermediates/pre-dexed/debug/classes-fab13bc231c622e1438b7b8683d6b75d8278aaf3.jar" />
+    </item>
+    <item
+        jar="/Users/strangelyhuman/Desktop/Cmpe240_autonomous_car_Fall15/Android/Aditya/app/build/intermediates/exploded-aar/com.google.android.gms/play-services-gcm/7.8.0/jars/classes.jar"
+        jumboMode="false"
+        revision="23.0.1"
+        sha1="c756d14e99d39471e99013a1e8fd2f3813ed42bf">
+        <dex dex="/Users/strangelyhuman/Desktop/Cmpe240_autonomous_car_Fall15/Android/Aditya/app/build/intermediates/pre-dexed/debug/classes-e6dd19cdc3c8d79ab3179d26d0626e01b98c36b6.jar" />
+    </item>
+    <item
+        jar="/Users/strangelyhuman/Desktop/Cmpe240_autonomous_car_Fall15/Android/Aditya/app/build/intermediates/exploded-aar/com.google.android.gms/play-services-drive/7.8.0/jars/classes.jar"
+        jumboMode="false"
+        revision="23.0.1"
+        sha1="42a1ee578b62fd1bd28b3307a679dc9ba0791587">
+        <dex dex="/Users/strangelyhuman/Desktop/Cmpe240_autonomous_car_Fall15/Android/Aditya/app/build/intermediates/pre-dexed/debug/classes-e1959483d1f708a00487fd96c9185c4b17f34f6f.jar" />
+    </item>
+    <item
+        jar="/Users/strangelyhuman/Desktop/Cmpe240_autonomous_car_Fall15/Android/Aditya/app/build/intermediates/exploded-aar/com.android.support/mediarouter-v7/22.2.0/jars/libs/internal_impl-22.2.0.jar"
+        jumboMode="false"
+        revision="23.0.1"
+        sha1="0632f06970823b7e3436f649bfa65b47035c91d0">
+        <dex dex="/Users/strangelyhuman/Desktop/Cmpe240_autonomous_car_Fall15/Android/Aditya/app/build/intermediates/pre-dexed/debug/internal_impl-22.2.0-224da6284f4c474eb41c4d540321c6a4c40dacdb.jar" />
+    </item>
+    <item
+        jar="/Users/strangelyhuman/Desktop/Cmpe240_autonomous_car_Fall15/Android/Aditya/app/build/intermediates/exploded-aar/com.google.android.gms/play-services-base/7.8.0/jars/classes.jar"
+        jumboMode="false"
+        revision="23.0.1"
+        sha1="c0c912d58c9468b1f9d9769c8975afdf2c85d681">
+        <dex dex="/Users/strangelyhuman/Desktop/Cmpe240_autonomous_car_Fall15/Android/Aditya/app/build/intermediates/pre-dexed/debug/classes-bf4141f752921f9fefee3a1a74754858679fef21.jar" />
+    </item>
+    <item
+        jar="/Users/strangelyhuman/Desktop/Cmpe240_autonomous_car_Fall15/Android/Aditya/app/build/intermediates/exploded-aar/com.google.android.gms/play-services-analytics/7.8.0/jars/classes.jar"
+        jumboMode="false"
+        revision="23.0.1"
+        sha1="0124ce31248c0e8acfa2b28283c6d1a4d76e73d2">
+        <dex dex="/Users/strangelyhuman/Desktop/Cmpe240_autonomous_car_Fall15/Android/Aditya/app/build/intermediates/pre-dexed/debug/classes-26163f3cae566c0a140e837534fdcdee1aebecc7.jar" />
+    </item>
+    <item
+        jar="/Users/strangelyhuman/Desktop/Cmpe240_autonomous_car_Fall15/Android/Aditya/app/build/intermediates/exploded-aar/com.android.support/appcompat-v7/23.0.1/jars/classes.jar"
+        jumboMode="false"
+        revision="23.0.1"
+        sha1="d86429b0f0b3f3cafbeb78dda1b9d89119ccb05d">
+        <dex dex="/Users/strangelyhuman/Desktop/Cmpe240_autonomous_car_Fall15/Android/Aditya/app/build/intermediates/pre-dexed/debug/classes-b0565c49e39d77c55d635a89e61e3d524e4a7d2e.jar" />
+    </item>
+    <item
+        jar="/Users/strangelyhuman/Desktop/Cmpe240_autonomous_car_Fall15/Android/Aditya/app/build/intermediates/exploded-aar/com.google.android.gms/play-services-cast/7.8.0/jars/classes.jar"
+        jumboMode="false"
+        revision="23.0.1"
+        sha1="130b32ed466fa0f63efd4c7d6250ccd2ed506790">
+        <dex dex="/Users/strangelyhuman/Desktop/Cmpe240_autonomous_car_Fall15/Android/Aditya/app/build/intermediates/pre-dexed/debug/classes-a7917654e71594ab77fc4904052c1688c1eedc64.jar" />
+    </item>
+    <item
+        jar="/Users/strangelyhuman/Desktop/Cmpe240_autonomous_car_Fall15/Android/Aditya/app/build/intermediates/exploded-aar/com.google.android.gms/play-services-location/7.8.0/jars/classes.jar"
+        jumboMode="false"
+        revision="23.0.1"
+        sha1="4a135d56554069e5d0ff80e3220e887e57146ee5">
+        <dex dex="/Users/strangelyhuman/Desktop/Cmpe240_autonomous_car_Fall15/Android/Aditya/app/build/intermediates/pre-dexed/debug/classes-ebced564b1706a00e69310353be28ce5438bfc9a.jar" />
+    </item>
+    <item
+        jar="/Users/strangelyhuman/Desktop/Cmpe240_autonomous_car_Fall15/Android/Aditya/app/build/intermediates/exploded-aar/com.google.android.gms/play-services-maps/7.8.0/jars/classes.jar"
+        jumboMode="false"
+        revision="23.0.1"
+        sha1="cb6fab7a71fa9ec1f483d44c5fca65ab469d8aca">
+        <dex dex="/Users/strangelyhuman/Desktop/Cmpe240_autonomous_car_Fall15/Android/Aditya/app/build/intermediates/pre-dexed/debug/classes-2241eb6751b48c47cbdc585f5fb7108e9be8efce.jar" />
+    </item>
+    <item
+        jar="/Users/strangelyhuman/Desktop/Cmpe240_autonomous_car_Fall15/Android/Aditya/app/build/intermediates/exploded-aar/com.google.android.gms/play-services-games/7.8.0/jars/classes.jar"
+        jumboMode="false"
+        revision="23.0.1"
+        sha1="2e24e5f1b11170163028277de63f709e42525db4">
+        <dex dex="/Users/strangelyhuman/Desktop/Cmpe240_autonomous_car_Fall15/Android/Aditya/app/build/intermediates/pre-dexed/debug/classes-680aaf8cd9ce3dcd681e5cd924c4bc02af8e9ac4.jar" />
+    </item>
+    <item
+        jar="/Users/strangelyhuman/Desktop/Cmpe240_autonomous_car_Fall15/Android/Aditya/app/build/intermediates/exploded-aar/com.google.android.gms/play-services-appstate/7.8.0/jars/classes.jar"
+        jumboMode="false"
+        revision="23.0.1"
+        sha1="edea92852b40eee716e910af8dad9eeaa58fb0e1">
+        <dex dex="/Users/strangelyhuman/Desktop/Cmpe240_autonomous_car_Fall15/Android/Aditya/app/build/intermediates/pre-dexed/debug/classes-69d055ff93f9b3866068f563051dfa7b3be6226f.jar" />
+    </item>
+    <item
+        jar="/Users/strangelyhuman/Desktop/Cmpe240_autonomous_car_Fall15/Android/Aditya/app/build/intermediates/exploded-aar/com.google.android.gms/play-services-wearable/7.8.0/jars/classes.jar"
+        jumboMode="false"
+        revision="23.0.1"
+        sha1="c5cafb324568d954780abb858c25db7ce675ab3c">
+        <dex dex="/Users/strangelyhuman/Desktop/Cmpe240_autonomous_car_Fall15/Android/Aditya/app/build/intermediates/pre-dexed/debug/classes-a8faba67ac6ca19e69ee48b3b2ab2ab172268bf3.jar" />
+    </item>
+    <item
+        jar="/Users/strangelyhuman/Desktop/Cmpe240_autonomous_car_Fall15/Android/Aditya/app/build/intermediates/exploded-aar/com.google.android.gms/play-services-fitness/7.8.0/jars/classes.jar"
+        jumboMode="false"
+        revision="23.0.1"
+        sha1="77a9dcb5f8b1dba36aacaa9c150eb0942dbea158">
+        <dex dex="/Users/strangelyhuman/Desktop/Cmpe240_autonomous_car_Fall15/Android/Aditya/app/build/intermediates/pre-dexed/debug/classes-c4b4a748268bf9ec416a66ed722b540bd67e567b.jar" />
+    </item>
+    <item
+        jar="/Users/strangelyhuman/Desktop/Cmpe240_autonomous_car_Fall15/Android/Aditya/app/build/intermediates/exploded-aar/com.android.support/mediarouter-v7/22.2.0/jars/classes.jar"
+        jumboMode="false"
+        revision="23.0.1"
+        sha1="dcf8c83c3dead00a6c4fe313e95f7aaca20dc641">
+        <dex dex="/Users/strangelyhuman/Desktop/Cmpe240_autonomous_car_Fall15/Android/Aditya/app/build/intermediates/pre-dexed/debug/classes-13d11af15f4a566273ef063dfac1a137f0ff18bc.jar" />
+    </item>
+    <item
+        jar="/Users/strangelyhuman/Desktop/Cmpe240_autonomous_car_Fall15/Android/Aditya/app/build/intermediates/exploded-aar/com.google.android.gms/play-services-wallet/7.8.0/jars/classes.jar"
+        jumboMode="false"
+        revision="23.0.1"
+        sha1="c2ac04c5b232f6f0658ee4f1c13be09cd76406e2">
+        <dex dex="/Users/strangelyhuman/Desktop/Cmpe240_autonomous_car_Fall15/Android/Aditya/app/build/intermediates/pre-dexed/debug/classes-a71852e3f8874e99e9c5b3d20d1c286b2c66361b.jar" />
+    </item>
+    <item
+        jar="/Users/strangelyhuman/Desktop/Cmpe240_autonomous_car_Fall15/Android/Aditya/app/build/intermediates/exploded-aar/com.google.android.gms/play-services-ads/7.8.0/jars/classes.jar"
+        jumboMode="false"
+        revision="23.0.1"
+        sha1="1ff30fa49c07a08c3035d7218a3efebf5680d522">
+        <dex dex="/Users/strangelyhuman/Desktop/Cmpe240_autonomous_car_Fall15/Android/Aditya/app/build/intermediates/pre-dexed/debug/classes-19561c77e353fd96b4f61b38dad5ad35d86340ed.jar" />
+    </item>
+    <item
+        jar="/Users/strangelyhuman/Desktop/Cmpe240_autonomous_car_Fall15/Android/Aditya/app/build/intermediates/exploded-aar/com.google.android.gms/play-services-safetynet/7.8.0/jars/classes.jar"
+        jumboMode="false"
+        revision="23.0.1"
+        sha1="166e458ee3b5fb5fcff0f936df3f3a788e6c54f3">
+        <dex dex="/Users/strangelyhuman/Desktop/Cmpe240_autonomous_car_Fall15/Android/Aditya/app/build/intermediates/pre-dexed/debug/classes-91d7678951c4cb9dc9d45130256503420821a511.jar" />
+    </item>
+    <item
+        jar="/Users/strangelyhuman/Desktop/Cmpe240_autonomous_car_Fall15/Android/Aditya/app/build/intermediates/exploded-aar/com.google.android.gms/play-services-appinvite/7.8.0/jars/classes.jar"
+        jumboMode="false"
+        revision="23.0.1"
+        sha1="98137c4d12c50923f5809852b1ef4d1c4e162081">
+        <dex dex="/Users/strangelyhuman/Desktop/Cmpe240_autonomous_car_Fall15/Android/Aditya/app/build/intermediates/pre-dexed/debug/classes-b0d618880bfbea9f83c9b2d1c32b36f0dad02584.jar" />
+    </item>
+    <item
+        jar="/Users/strangelyhuman/Desktop/Cmpe240_autonomous_car_Fall15/Android/Aditya/app/build/intermediates/exploded-aar/com.google.android.gms/play-services-appindexing/7.8.0/jars/classes.jar"
+        jumboMode="false"
+        revision="23.0.1"
+        sha1="e23ea11124bb700eeddd4ab7aa848c615f493850">
+        <dex dex="/Users/strangelyhuman/Desktop/Cmpe240_autonomous_car_Fall15/Android/Aditya/app/build/intermediates/pre-dexed/debug/classes-29f50e198aa214d38e9885779aa356c6faa834ac.jar" />
+    </item>
+    <item
+        jar="/Users/strangelyhuman/Desktop/Cmpe240_autonomous_car_Fall15/Android/Aditya/app/build/intermediates/exploded-aar/com.android.support/support-v4/23.0.1/jars/classes.jar"
+        jumboMode="false"
+        revision="23.0.1"
+        sha1="c31e21b53ff2f74664e498248d01453a32e32d48">
+        <dex dex="/Users/strangelyhuman/Desktop/Cmpe240_autonomous_car_Fall15/Android/Aditya/app/build/intermediates/pre-dexed/debug/classes-29148ac0bd96c9a5e91170f3ca44e4328028d112.jar" />
+    </item>
+    <item
+        jar="/Users/strangelyhuman/Desktop/Cmpe240_autonomous_car_Fall15/Android/Aditya/app/build/intermediates/exploded-aar/com.google.android.gms/play-services-panorama/7.8.0/jars/classes.jar"
+        jumboMode="false"
+        revision="23.0.1"
+        sha1="6e85edfc9b5346d216e50ccef1f8e825504144a3">
+        <dex dex="/Users/strangelyhuman/Desktop/Cmpe240_autonomous_car_Fall15/Android/Aditya/app/build/intermediates/pre-dexed/debug/classes-f9d2e5f2825ec0d32d2c79ad0050b37869510901.jar" />
+    </item>
+
+</items>
