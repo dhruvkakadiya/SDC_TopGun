@@ -44,7 +44,9 @@ void adc0_init(void);
  */
 uint16_t adc0_get_reading(uint8_t channel_num);
 
+//static inline void adc0_start_conversion(uint8_t channel_num);
 
+void my_adc0_start_conversion(uint8_t channel_num);
 
 #ifdef __cplusplus
 }

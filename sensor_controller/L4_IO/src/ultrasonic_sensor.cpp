@@ -11,15 +11,31 @@
 #include "adc0.h"
 #include "utilities.h" // for TIME_US() in PING
 #include "eint.h"   //for EINT3XXXXXX used in PING
+#include "io.hpp"
 
-    //Divya editing master module for ultrasonic sensor
-    //Creating a class instance of all the ultrasonic modules
-    Ultra_Sonic_4ping front_ultrasonic(P2_0, P2_1, 0);
-    Ultra_Sonic_4ping right_ultrasonic(P2_2, P2_3, 1);
-    Ultra_Sonic_4ping left_ultrasonic(P2_4, P2_5, 2);
-char zoneMessage[4][10] = {"N", "M", "F", "P"};
+typedef enum{
+    threshold_zero    = 0 ,
+    threshold_nearest = 60,
+    threshold_near    = 120,
+    threshold_middle  = 190,
+    threshold_far      = 300,
+} obs_thre;
 
+typedef enum {
+    P = 0, //pass--no_obstacle:)
+    F,  // Far
+    M,  // Middle
+    N  // Near
+} distance_obstacle;
 
+//Divya editing master module for ultrasonic sensor
+//Creating a class instance of all the ultrasonic modules
+
+Ultra_Sonic_4ping front_ultrasonic(P2_0, P2_1, 0);
+Ultra_Sonic_4ping right_ultrasonic(P2_2, P2_3, 1);
+Ultra_Sonic_4ping left_ultrasonic(P2_4, P2_5, 2);
+
+char zoneMessage[4] = {'P', 'F', 'M', 'N'};
 
 /* TogglePower
  * This function allows the caller to turn the sensor on or off.
@@ -94,13 +110,12 @@ float UltrasonicSensor::GetFilteredRangeValue(void)
 SemaphoreHandle_t Ultra_Sonic_4ping :: Trig_Sem;//indicating the static variables created in .hpp file belong to this class
 uint64_t  Ultra_Sonic_4ping :: up_time;
 uint64_t Ultra_Sonic_4ping :: down_time;
-uint32_t Ultra_Sonic_4ping :: diff_time;
-float  Ultra_Sonic_4ping :: distance_value;
-Sensor_Filter <double, double> Ultra_Sonic_4ping:: avg_filter;
+uint64_t Ultra_Sonic_4ping :: diff_time;
+double  Ultra_Sonic_4ping :: distance_value;
 QueueHandle_t Ultra_Sonic_4ping:: xQueue[MAX_SENSOR_COUNT];
 int Ultra_Sonic_4ping :: index = 0;
 int Ultra_Sonic_4ping :: zone;
-
+bool Ultra_Sonic_4ping:: max_time_flag = false;
 
 //Constructor for the 4-pin ping sensor
 Ultra_Sonic_4ping :: Ultra_Sonic_4ping( LPC1758_GPIO_Type pTrig_out_pin,  LPC1758_GPIO_Type pEcho_in_pin, int index1):
@@ -112,27 +127,27 @@ Ultra_Sonic_4ping :: Ultra_Sonic_4ping( LPC1758_GPIO_Type pTrig_out_pin,  LPC175
    xSemaphoreGive(Trig_Sem);             //send trig() will first check if its taken
    trig_out.setAsOutput();
    echo_in.setAsInput();
-   xQueue[instance] = xQueueCreate(2,sizeof(float));
+   xQueue[instance] = xQueueCreate(2 , sizeof(double));
 
    switch(pEcho_in_pin)
    {
        case (P2_1) :  //  if(index1 == 0)
-                        {
-                               echo_pin = 1;
-                        }
-                        break;
+        {
+           echo_pin = 1;
+        }
+        break;
 
-       case (P2_3) :  // if(index1 == 1)
-                       {
-                               echo_pin = 3;
-                       }
-                        break;
+        case (P2_3) :  // if(index1 == 1)
+        {
+           echo_pin = 3;
+        }
+        break;
 
-       case (P2_5) :   // if(index1 == 2)
-                        {
-                              echo_pin = 5;
-                        }
-                        break;
+        case (P2_5) :   // if(index1 == 2)
+        {
+          echo_pin = 5;
+        }
+        break;
    }
 
    eint3_enable_port2(echo_pin,eint_rising_edge,echo_high_callback);
@@ -144,7 +159,7 @@ bool Ultra_Sonic_4ping ::send_trig()
     if( xSemaphoreTake(Trig_Sem,0))
     {
         //reset the GPIO pins
-        trig_out.set(false);
+        trig_out.setLow();
         delay_us(5);
 
         trig_out.setHigh();
@@ -152,41 +167,57 @@ bool Ultra_Sonic_4ping ::send_trig()
        trig_out.setLow();
 
     }
+
     return true;
 }
 
 void Ultra_Sonic_4ping :: echo_high_callback()
 {
-
     up_time = sys_get_uptime_us();
 }
 
 void Ultra_Sonic_4ping :: echo_low_callback()
 {
-    down_time = sys_get_uptime_us();
 
-    //Calculate the time of the ECHO pulse
+/*    if(Ultra_Sonic_4ping::max_time_flag ==  true)
+    {
+        distance_value = MAX_VALUE;
+        Ultra_Sonic_4ping::max_time_flag = false;
+    }
+    else
+    { */
+        down_time = sys_get_uptime_us();
 
-    diff_time = down_time - up_time;
+        //Calculate the time of the ECHO pulse
 
-    distance_value = (float)(diff_time)*(1.0/58);  //Distance in cms
+        diff_time = down_time - up_time;
+
+        distance_value = (double)(diff_time)*(1.0/58.0);  //Distance in cms
+
+        if(distance_value > MAX_VALUE)
+        {
+            distance_value = MAX_VALUE;
+        }
+   // }
 
     xQueueSendFromISR(xQueue[Ultra_Sonic_4ping :: index], &distance_value,0);
 
+#if !SINGLE_SENSOR
     Ultra_Sonic_4ping :: index = Ultra_Sonic_4ping :: index  + 1;
 
     if(Ultra_Sonic_4ping::index == MAX_SENSOR_COUNT)
     {
         Ultra_Sonic_4ping::index = 0;
     }
+#endif
 
     xSemaphoreGiveFromISR(Trig_Sem,false);
 
 }
 
-float Ultra_Sonic_4ping :: ping_get_from_filter()
+double Ultra_Sonic_4ping :: ping_get_from_filter()
 {
-    float d = 0.0;
+    double d = 0.0;
 
     d = avg_filter.getValue();
 
@@ -195,27 +226,30 @@ float Ultra_Sonic_4ping :: ping_get_from_filter()
 
 bool Ultra_Sonic_4ping :: recieve_from_queue(void)
 {
-    //this will fetch the value from the queue and put it in a buffer(pass-by-ref),0 delay / ticks
+    //this will fetch the value from the queue and put it in a buffer(pass-by-ref), 0 delay / ticks
     xQueueReceive( xQueue[instance], &buff_for_recieve, 0);
+
     return true;
 }
 
-float Ultra_Sonic_4ping :: get_buffer_value()
+double Ultra_Sonic_4ping :: get_buffer_value()
 {
     return buff_for_recieve;
 }
 
-void Ultra_Sonic_4ping :: add_queue_value_to_filter(float a)
+void Ultra_Sonic_4ping :: add_queue_value_to_filter(void)
 {
-    avg_filter.addValue(a);
+    avg_filter.addValue(buff_for_recieve);
+
+    return;
 }
 
 int Ultra_Sonic_4ping :: get_zone(float avg)
 {
 
-    if( (  avg >= threshold_zero) && ( avg <= threshold_nearest))
+    if(( avg >= threshold_zero) && ( avg <= threshold_nearest))
      {
-             zone = N;
+            zone = N;
      }
      else if(( avg > threshold_nearest) && ( avg <= threshold_near))
      {
@@ -258,19 +292,17 @@ void Ultra_Sonic_4ping :: display_zone(int a)
 
 void  interrupt_based_ping_sensor()
 {
+    static double latest_valuef = 0;
+    static double latest_valuer = 0;
+    static double latest_valuel = 0;
 
+#if ZONE_INFO
+    static int front_obstacle_zone = 0;
+    static int right_obstacle_zone = 0;
+    static int left_obstacle_zone = 0;
 
-        static float latest_valuef = 0;
-        static float latest_valuer = 0;
-        static float latest_valuel = 0;
-
-        static int front_obstacle_zone = 0;
-        static  int right_obstacle_zone = 0;
-        static  int left_obstacle_zone = 0;
-
-         obs_thre threshold;
-
-
+ //    obs_thre threshold;
+#endif
 
       //****************************SENSOR******************************//
 
@@ -278,69 +310,268 @@ void  interrupt_based_ping_sensor()
          * Ping Sensor 0; Read All Queues
         */
 
-
       //TRIGGER TO ONE OF THE SENSORS
       if(Ultra_Sonic_4ping::index == 0)
       {
-          front_ultrasonic.send_trig();
-     //     printf("front sensor selected\n");
 
+        if(front_ultrasonic.pinNotLow())
+        {
+           //printf("Echo Pin Not Low\n");
+           Ultra_Sonic_4ping::max_time_flag = true;
+           return;
+        }
+
+        front_ultrasonic.send_trig();
       }
+
+#if !SINGLE_SENSOR
       else if(Ultra_Sonic_4ping::index == 1)
       {
-          right_ultrasonic.send_trig();
-     //     printf("right sensor selected\n");
+          if(right_ultrasonic.pinNotLow())
+          {
+             //printf("Echo Pin Not Low\n");
+             Ultra_Sonic_4ping::max_time_flag = true;
+             return;
+          }
 
+          right_ultrasonic.send_trig();
        }
+
       else if(Ultra_Sonic_4ping::index == 2)
       {
-          left_ultrasonic.send_trig();
-     //     printf("left sensor selected\n");
-      }
-
-      if(front_ultrasonic.recieve_from_queue())  //if the queue has a value->returns true
-      {
-          if(Ultra_Sonic_4ping :: index == 0)
+          if(left_ultrasonic.pinNotLow())
           {
-              latest_valuef = front_ultrasonic.get_buffer_value();
+             //printf("Echo Pin Not Low\n");
+             Ultra_Sonic_4ping::max_time_flag = true;
+             return;
           }
+
+          left_ultrasonic.send_trig();
       }
- //     front_obstacle_zone = front_ultrasonic.get_zone(latest_valuef);
+#endif
+
+
+#if 1
+ //     if(front_ultrasonic.recieve_from_queue())  //if the queue has a value->returns true
+ //     {
+          if((Ultra_Sonic_4ping :: index - 1) == 0)
+          {
+              front_ultrasonic.recieve_from_queue();
+
+              front_ultrasonic.add_queue_value_to_filter();
+
+              latest_valuef = front_ultrasonic.ping_get_from_filter();
+          }
+  //    }
+
+#if ZONE_INFO
+   front_obstacle_zone = front_ultrasonic.get_zone(latest_valuef);
+#endif
 
     //end of front sensor
     //////////////////////////////////////////////////////////
     //////////////////////////////////////////////////////////
     //start of right sensor
 
-      if(right_ultrasonic.recieve_from_queue())
-      {
-          if(Ultra_Sonic_4ping :: index == 1)
-          {
-                 latest_valuer = right_ultrasonic.get_buffer_value();
-          }
-      }
- //     right_obstacle_zone = right_ultrasonic.get_zone(latest_valuer);
+#if !SINGLE_SENSOR
 
+
+          if((Ultra_Sonic_4ping :: index - 1) == 1)
+          {
+                 right_ultrasonic.recieve_from_queue();
+
+                 right_ultrasonic.add_queue_value_to_filter();
+
+                 latest_valuer = right_ultrasonic.ping_get_from_filter();
+          }
+
+
+#if ZONE_INFO
+     right_obstacle_zone = right_ultrasonic.get_zone(latest_valuer);
+#endif
+
+#endif
     //end of right sensor
     //////////////////////////////////////////////////////////
     //////////////////////////////////////////////////////////
     //start of left sensor
 
-      if(left_ultrasonic.recieve_from_queue())
-      {
-          if(Ultra_Sonic_4ping :: index == 2)
+#if !SINGLE_SENSOR
+
+          if((Ultra_Sonic_4ping :: index - 1) == -1)
           {
-              latest_valuel = left_ultrasonic.get_buffer_value();
+              left_ultrasonic.recieve_from_queue();
+
+              left_ultrasonic.add_queue_value_to_filter();
+
+              latest_valuel = left_ultrasonic.ping_get_from_filter();
           }
-      }
- //     left_obstacle_zone = left_ultrasonic.get_zone(latest_valuel);
 
+
+#if ZONE_INFO
+      left_obstacle_zone = left_ultrasonic.get_zone(latest_valuel);
+#endif
+
+#endif
     //////////////////////////////////end of left sensor
+#endif
 
-      printf("R: %f -- M: %f --L:%f\n",latest_valuer,latest_valuef,latest_valuel);
- //    printf("[%s] -- [%s] -- [%s]   \n", zoneMessage[right_obstacle_zone],zoneMessage[front_obstacle_zone],
- //             zoneMessage[left_obstacle_zone]);
+#if 0 // ZONE_INFO
+      //printf("[%c][%c][%c]\n", zoneMessage[left_obstacle_zone],zoneMessage[front_obstacle_zone], zoneMessage[right_obstacle_zone]);
+
+      if(right_obstacle_zone == N)
+      {
+          LE.on(RIGHT_LED);
+      }
+      else
+      {
+          LE.off(RIGHT_LED);
+      }
+
+      if(left_obstacle_zone == N)
+      {
+          LE.on(LEFT_LED);
+      }
+      else
+      {
+          LE.off(LEFT_LED);
+      }
+
+      if (front_obstacle_zone == N)
+      {
+          LE.on(FRONT_LED);
+      }
+      else
+      {
+          LE.off(FRONT_LED);
+      }
+
+//#else
+    // printf("[%f][%f][%f]\n", latest_valuer, latest_valuef, latest_valuel);
+
+#endif
+
+#if SENSOR_SEND_ON_CAN
+
+      dist_sensor all_sensor;
+      can_msg_t sensor_msg;
+      bool status = false;
+
+#if ZONE_INFO
+
+      all_sensor.front_center = (uint8_t) front_obstacle_zone;
+      all_sensor.front_left   = (uint8_t) left_obstacle_zone;
+      all_sensor.front_right  = (uint8_t) right_obstacle_zone;
+
+     sensor_msg.msg_id = DISTANCE_SENSOR_ID;
+
+      sensor_msg.frame_fields.is_29bit = false;      //11-bit
+      sensor_msg.frame_fields.data_len = sizeof(dist_sensor);
+
+      memcpy(&sensor_msg.data.qword, &all_sensor, sizeof(dist_sensor));
+
+      status = CAN_tx(PING_CAN, &sensor_msg, PING_TIMEOUT);
+
+      if(!status)
+      {
+          LOG_ERROR("Sending Distance values -- FAILED ");
+   //       LE.on( PING_ZONE_SENDING_ERROR_LED );    //LE.on(3);
+      }
+      else
+      {
+          LE.toggle(  PING_ZONE_SENDING_ERROR_LED  );
+      }
+
+#else
+
+      all_sensor.front_center = latest_valuef ;
+      all_sensor.front_left   = latest_valuel ;
+      all_sensor.front_right  = latest_valuer ;
+
+      sensor_msg.msg_id = DISTANCE_SENSOR_ID ;
+      sensor_msg.frame_fields.is_29bit = 0;      //11-bit
+      sensor_msg.frame_fields.data_len = sizeof(dist_sensor);
+      memcpy(&sensor_msg.data.qword,&all_sensor,sizeof(dist_sensor));
+
+      status = CAN_tx(PING_CAN,&sensor_msg,PING_TIMEOUT);
+
+      if(status == false)
+      {
+          LOG_ERROR("Sending Distance values -- FAILED ");
+          LE.toggle(  PING_ZONE_SENDING_ERROR_LED  );
+      }
+      else
+      {
+          LE.off(  PING_ZONE_SENDING_ERROR_LED  );
+      }
+
+#endif
+#endif
+}
+bool bus_reset()
+{
+    CAN_reset_bus(PING_CAN);
+    return true;
+}
+
+void ping_heartbeat(void)
+{
+        //Heartbeat to master
+        can_msg_t sensor_heart_msg;
+        bool status = false;
+
+        sensor_heart_msg.msg_id = SENSOR_HEARTBEAT_ID ;
+        sensor_heart_msg.frame_fields.is_29bit = 0;
+        sensor_heart_msg.frame_fields.data_len = 0;
+
+        //can2,sensor_heartbeat_id,0 timout
+        status = CAN_tx(PING_CAN, &sensor_heart_msg, PING_TIMEOUT);
+
+        if(status == false)
+        {
+            LOG_ERROR("SENDING PING HEARTBEAT FAILED!!");
+        }
+        else
+        {
+            LE.toggle(  PING_HEARTBEAT_ERROR_LED  );  //LED 4
+        }
+}
+
+void ping_powerupsync(void)
+{
+    can_msg_t ping_sync_msg;
+    bool sync_ack = false;
+    bool status   = false;
+
+    ping_sync_msg.msg_id = SENSOR_SYNC_ID ;
+    ping_sync_msg.frame_fields.is_29bit = 0;
+    ping_sync_msg.frame_fields.data_len = 0;
+
+    do
+    {
+        status = CAN_tx(PING_CAN,&ping_sync_msg,PING_TIMEOUT);
+
+        if(status == false)
+        {
+            LOG_ERROR("SENDING PING SYNC FAILED!");
+        }
+
+        delay_ms(500);
+
+    }while (sync_ack == false);
+
 
 }
 
+extern bool bus_off;
+void test_bus_off_cb(uint32_t d)
+{
+   bus_off = true;
+   LE.on(PING_CAN_BO);
+}
+
+void data_ovr_cb(uint32_t d)
+{
+    return;
+}
 

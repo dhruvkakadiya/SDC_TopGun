@@ -77,19 +77,24 @@
 
 /* Avoid using IDLE priority since I have found that the logger task corrupts the file system at IDLE priority.
  * This probably has to do with SPI(with DMA) bus not functioning correctly when IDLE task puts the CPU to sleep.
- *
- * configMAX_PRIORITIES should include +1 for idle task priority, and + periodic scheduler priority.
  */
-#define PERIODIC_SCH_PRIORITIES                 (5)
-#define configMAX_PRIORITIES                    (1 + 4 + PERIODIC_SCH_PRIORITIES)
+#define configMAX_PRIORITIES                    ( 1 + 4 )
 
-// Idle priority of 0 should not be used
-#define PRIORITY_LOW        1
-#define PRIORITY_MEDIUM     2
-#define PRIORITY_HIGH       3
-// Critical priority is the highest priority before the periodic scheduler priorites start
-#define PRIORITY_CRITICAL 	(configMAX_PRIORITIES - PERIODIC_SCH_PRIORITIES - 1)
-
+#if   (configMAX_PRIORITIES == 3)
+    #define PRIORITY_LOW        1
+    #define PRIORITY_HIGH       2
+#elif (configMAX_PRIORITIES == 4)
+    #define PRIORITY_LOW		1
+    #define PRIORITY_MEDIUM		2
+    #define PRIORITY_HIGH		3
+#elif (configMAX_PRIORITIES == 5)
+    #define PRIORITY_LOW        1
+    #define PRIORITY_MEDIUM     2
+    #define PRIORITY_HIGH       3
+    #define PRIORITY_CRITICAL 	4
+#else
+    #error "You should really not need more than 4 priorities.  Consider using 4 or less, or override this error message"
+#endif
 
 /**
  * @{ FreeRTOS Memory configuration

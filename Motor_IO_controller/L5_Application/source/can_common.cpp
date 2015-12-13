@@ -10,6 +10,12 @@ can_msg_t no_motor_msg,tmp_can_msg,received_msg;
 //extern can_msg_t motor_msg;
 int no_motor_msg_count=0;
 DRIVER_TX_MOTORIO_DIRECTION_t motor_msg;
+GEO_TX_GEO_SPEED_ANGLE_t geo_msg; // anuj's change here
+SENSOR_TX_SENSOR_SONARS_t sensor_msg; // anuj's change here
+SENSOR_TX_SENSOR_LIGHT_BAT_t sensor_bat_msg; // anuj's change here
+GEO_TX_GEO_LOC_DATA_t geo_loc_msg;
+
+can_msg_t motor_lcd,geo_lcd,sensor_lcd,geo_loc_lcd;
 
 static bool bus_off_state = false;
 static bool powerup_sync_motor_io_controller( void );
@@ -51,10 +57,11 @@ bool can_init(void) {
     LOG_INFO("MOTORIO CAN bus is initialized\n");
 
     // Setup necessary message filter
-    const can_std_id_t slist[] = { CAN_gen_sid(MOTORIO_CNTL_CANBUS, RESET_ID), CAN_gen_sid(MOTORIO_CNTL_CANBUS, MASTER_SYNC_ACK_ID),
-                                   CAN_gen_sid(MOTORIO_CNTL_CANBUS, RUN_MODE_ID), CAN_gen_sid(MOTORIO_CNTL_CANBUS, MOTOR_DIRECTIONS_ID)
-                                 };
-    CAN_setup_filter(slist, 4, NULL, 0, NULL, 0, NULL, 0);
+    //const can_std_id_t slist[] = { CAN_gen_sid(MOTORIO_CNTL_CANBUS, RESET_ID), CAN_gen_sid(MOTORIO_CNTL_CANBUS, MASTER_SYNC_ACK_ID),
+      //                             CAN_gen_sid(MOTORIO_CNTL_CANBUS, RUN_MODE_ID), CAN_gen_sid(MOTORIO_CNTL_CANBUS, MOTOR_DIRECTIONS_ID)
+        //                         };
+    CAN_bypass_filter_accept_all_msgs();
+    //CAN_setup_filter(slist, 4, NULL, 0, NULL, 0, NULL, 0);
     CAN_reset_bus(MOTORIO_CNTL_CANBUS);
 
     // Sync with the master controller by sending power_up_sync
@@ -93,32 +100,84 @@ bool transmit_data(can_msg_t transmit_msg){
 // Receive data over CAN
 bool receive_data(){
     // XXX: This should be a while loop to empty the CAN receive queues
-    if(false == CAN_rx(MOTORIO_CNTL_CANBUS, &received_msg, 0)) {
-        //SET_ERROR(ERROR_TX_FAILED);
-        //LOG_ERROR("CAN_rx failed\n");
-       // motor_msg = no_motor_msg;
-        no_motor_msg_count++;
-        return false;
-    }
-    else {
+
+    while(CAN_rx(MOTORIO_CNTL_CANBUS, &received_msg, 0)) {
+    //    if(CAN_rx(MOTORIO_CNTL_CANBUS, &received_msg, 0)){
+/*
+        if(received_msg.msg_id == DISTANCE_SENSOR_ID){
+            printf("yes\n");
+        }
+        else
+            printf("no\n");
+*/
+
+
         no_motor_msg_count = 0;
-        if (received_msg.msg_id == MOTOR_DIRECTIONS_ID) {
-            msg_hdr_t hdr = { received_msg.msg_id, (uint8_t)received_msg.frame_fields.data_len };
-            DRIVER_TX_MOTORIO_DIRECTION_decode(&motor_msg,
-                                    (uint64_t*)&received_msg.data,
-                                    &hdr); // NULL
+        msg_hdr_t hdr;
+        switch(received_msg.msg_id){
+
+            case MOTOR_DIRECTIONS_ID:
+                //printf("in motor_direction\n");
+                motor_lcd = received_msg;
+                hdr = { received_msg.msg_id, (uint8_t)received_msg.frame_fields.data_len };
+                DRIVER_TX_MOTORIO_DIRECTION_decode(&motor_msg,
+                                        (uint64_t*)&received_msg.data,
+                                        &hdr); // NULL
+                //printf(" %x   %x\n",motor_msg.MOTORIO_DIRECTION_speed_cmd,motor_msg.MOTORIO_DIRECTION_turn_cmd);
+                break;
+
+            case RESET_ID:
+                motor_io_get_master_reset();
+                break;
+
+            case MASTER_SYNC_ACK_ID:
+                // MotorIO controller get sync with Master controller
+                break;
+
+            case RUN_MODE_ID:
+                // DC motor's base speed is get changed
+                break;
+
+            case GEO_SPEED_ANGLE_ID:
+                //printf("in geo_speed_angle\n");
+                geo_lcd = received_msg;
+                hdr = { received_msg.msg_id, (uint8_t)received_msg.frame_fields.data_len };
+                GEO_TX_GEO_SPEED_ANGLE_decode(&geo_msg,(uint64_t*)&received_msg.data,&hdr); // NULL
+                break;
+
+            case DISTANCE_SENSOR_ID:
+                //printf("in distance sensor\n");
+                //printf(" raw : %d   %d  %d\n",received_msg.data.bytes[0],received_msg.data.bytes[2],received_msg.data.bytes[3]);
+                sensor_lcd = received_msg;
+                hdr = { received_msg.msg_id, (uint8_t)received_msg.frame_fields.data_len };
+                SENSOR_TX_SENSOR_SONARS_decode(&sensor_msg,
+                                        (uint64_t*)&received_msg.data,
+                                        &hdr); // NULL
+                //printf(" %x   %x  %x\n",sensor_msg.SENSOR_SONARS_front_left,sensor_msg.SENSOR_SONARS_front_center,sensor_msg.SENSOR_SONARS_front_right);
+                break;
+
+            case LIGHT_BATTERY_SENSOR_ID:
+                //printf("battery sensor\n");
+                hdr = { received_msg.msg_id, (uint8_t)received_msg.frame_fields.data_len };
+                SENSOR_TX_SENSOR_LIGHT_BAT_decode(&sensor_bat_msg,
+                                        (uint64_t*)&received_msg.data,
+                                        &hdr); // NULL
+                break;
+
+            case GEO_LOC_DATA_ID:
+                //printf("in geo loc data\n");
+                geo_loc_lcd = received_msg;
+
+                hdr = { received_msg.msg_id, (uint8_t)received_msg.frame_fields.data_len };
+                GEO_TX_GEO_LOC_DATA_decode(&geo_loc_msg,
+                                        (uint64_t*)&received_msg.data,
+                                        &hdr); // NULL
+                break;
+            default: //printf("default\n");
+                break;
         }
-        else if (received_msg.msg_id == RESET_ID) {
-            motor_io_get_master_reset();
-        }
-        else if (received_msg.msg_id == MASTER_SYNC_ACK_ID) {
-            // MotorIO controller get sync with Master controller
-        }
-        else if (received_msg.msg_id == RUN_MODE_ID) {
-            // DC motor's base speed is get changed
-        }
-        return true;
     }
+    return true;
 }
 
 // Send Motor_IO heartbeat to master

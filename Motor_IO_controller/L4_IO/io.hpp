@@ -28,6 +28,7 @@
 #define IO_SHORTCUTS_HPP_
 
 
+
 #include "acceleration_sensor.hpp"
 #include "IR_sensor.hpp"
 #include "LED_Display.hpp"
@@ -35,6 +36,8 @@
 #include "light_sensor.hpp"
 #include "switches.hpp"
 #include "temperature_sensor.hpp"
+#include "uart2.hpp"
+
 
 /**
  * @{ Short-hand notation of getting to the on-board IO Devices
@@ -47,6 +50,9 @@
 #define LD      LED_Display::getInstance()         ///< 2-Digit LED Display
 #define LE      LED::getInstance()                 ///< 4 On-board LEDs
 #define SW      Switches::getInstance()            ///< 4 On-board Switches
+#define U2      Uart2::getInstance()
 /** @} */
+
+
 
 #endif /* IO_SHORTCUTS_HPP_ */

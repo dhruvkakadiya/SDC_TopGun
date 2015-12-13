@@ -12,6 +12,7 @@
 #include "can.h"
 #include "file_logger.h"
 #include <stdio.h>
+#include <stdlib.h>
 
 /* Static ID variables - Should be used as read only */
 static can_std_id_t can_id_kill;
@@ -45,6 +46,7 @@ static float long_array[MAX_LONGS] = {0.0};
 static bool power_up_sync_and_ack( void );
 static void bus_off_cb( uint32_t ICR_data );
 static void data_ovr_cb( uint32_t ICR_data );
+static uint64_t calculateDistance(geo_loc *geo_location_ref);
 
 static bool bus_off_status = false;
 
@@ -591,8 +593,13 @@ bool avoid_obstacle(void)
     }
     else
     {
-        motor_data.turn = (uint8_t) STRAIGHT;
-        motor_data.speed = (uint8_t) NORMAL;
+        // We are avoiding Obstacles only for NEAR and MID Obstacles.
+        // For all others, we are clear to move.
+
+        return false;
+
+        //motor_data.turn = (uint8_t) STRAIGHT;
+        //motor_data.speed = (uint8_t) NORMAL;
     }
 
 #endif
@@ -778,10 +785,8 @@ bool navigation_mode(void)
     can_fullcan_msg_t can_msg_chkpt_data;
     chk_point_snd *no_of_points;
 
-    // Function static variables
 
-
-    // Read Sensor Values for Obstacle Zones - Happens every 100Hz
+    // Check for a new checkpoint from the bluetooth controller
     can_msg_chkpt_ptr = CAN_fullcan_get_entry_ptr(can_id_chkpt_snd);
 
     status = CAN_fullcan_read_msg_copy(can_msg_chkpt_ptr, &can_msg_chkpt_data);
@@ -825,7 +830,7 @@ bool navigation_mode(void)
          * 3. If status is NAVIGATING - Do nothing
          */
 
-        if( nav_status == NAVIGATING )
+        if( nav_status == NAVIGATING || nav_status == PAUSED )
             return NAV_TRUE;
 
         else if( nav_status == RX_COMPLETE )
@@ -869,7 +874,7 @@ bool navigation_mode(void)
             long_array[nav_index] = chkpt->longitude;
             nav_index++;
 
-            if( nav_index == (total_chk_pts - 1) )
+            if( nav_index == total_chk_pts )
             {
                 // We have all the check points
                 nav_status = RX_COMPLETE;
@@ -882,21 +887,261 @@ bool navigation_mode(void)
 
 void navigate_to_next_chkpt( void )
 {
+    can_fullcan_msg_t* can_msg_geoloc_ptr = NULL;
+    static can_fullcan_msg_t can_msg_geoloc_data;
+
+    can_fullcan_msg_t* can_msg_heading_bearing_ptr = NULL;
+    static can_fullcan_msg_t can_msg_heading_bearing_data;
+    int32_t difference_heading_bearing = 0;
+    ZONE_NAVI navigation_zone;
+
+    motor_direction motor_data;
+    can_msg_t can_msg_motor_data;
+
+    geo_spd_angle* heading_bearing_ptr;
+    geo_loc *location_msg = NULL;
+    bool status = false;
+    static uint8_t mia_count = 0;
+    static uint8_t mia_count_navigating = 0;
+
     // Right now print the check-points one at a time
     if( nav_index == total_chk_pts )
     {
         // We have reached the destination
         nav_status = STOPPED;
         nav_index = 0;
-
-        return;
     }
 
-    printf("Current Checkpoint: LAT %f, LONG %f\n", lat_array[nav_index], long_array[nav_index]);
+    else
+    {
+        printf("Current Checkpoint: LAT %f, LONG %f\n", lat_array[nav_index], long_array[nav_index]);
 
-    // Check if checkpoint is reached
+        // Check if checkpoint is reached
+        // Get the GPS data from GEO controller
+        can_msg_geoloc_ptr = CAN_fullcan_get_entry_ptr(can_id_loc_data);
+        status = CAN_fullcan_read_msg_copy(can_msg_geoloc_ptr, &can_msg_geoloc_data);
 
-    // if reached, increment nav_index and issue next check-point
-    nav_index++;
+        if( !status )
+        {
+            // We couldn't receive location update. Check MIA count
+            mia_count++;
 
+            if( mia_count > GEO_LOC_MIA_MAX_COUNT )
+            {
+                // Stop navigation - Tell the motor driver to stop
+                nav_status = PAUSED;
+            }
+
+        }
+
+        else
+        {
+            nav_status = NAVIGATING;
+            mia_count = 0;
+
+            // Get the current GPS co-ordinates
+            location_msg = (geo_loc *)&(can_msg_geoloc_data.data.qword);
+            uint64_t dist_meters = calculateDistance(location_msg);
+
+            if( dist_meters <= MIN_DISTANCE_TO_CHKPT )
+            {
+                // Increment index and issue next check-point
+                nav_index++;
+
+                // If the last check-point has been reached simply increment index and return
+                if( nav_index < total_chk_pts )
+                {
+                    geo_loc next_loc;
+                    can_msg_t can_loc_update_msg;
+
+                    next_loc.latitude = lat_array[nav_index];
+                    next_loc.longitude = long_array[nav_index];
+
+                    can_loc_update_msg.msg_id = GEO_LOC_UPDATE_ID;
+                    can_loc_update_msg.frame_fields.is_29bit = false;
+                    can_loc_update_msg.frame_fields.data_len = sizeof(geo_loc);
+                    memcpy(&can_loc_update_msg.data.qword, &next_loc, sizeof(next_loc));
+
+                    CAN_tx(MASTER_CNTL_CANBUS, &can_loc_update_msg, MASTER_CNTL_CAN_DELAY);
+                }
+            }
+        }
+    }
+
+    // Based on the current status of navigation perform a suitable operation
+    switch( nav_status )
+    {
+        case STOPPED:
+        case PAUSED:
+
+            // Don't issue any motor commands, the car needs to stay stopped in both these cases
+            motor_data.speed = STOP;
+            motor_data.turn = STRAIGHT;
+
+            break;
+
+        case NAVIGATING:
+
+            // Navigation algorithm needs to come here
+            can_msg_heading_bearing_ptr = CAN_fullcan_get_entry_ptr(can_id_spd_angle);
+            status = CAN_fullcan_read_msg_copy(can_msg_heading_bearing_ptr, &can_msg_heading_bearing_data);
+
+            if(!status) {
+
+                mia_count_navigating++;
+
+                if(mia_count_navigating > GEO_HEADING_BEARING_MIA_MAX_COUNT)
+                {
+                    mia_count_navigating = 0;
+
+                    nav_status = PAUSED;
+
+                    motor_data.speed = STOP;
+                    motor_data.turn = STRAIGHT;
+                }
+            }
+            else {
+
+                mia_count_navigating = 0;
+                nav_status = NAVIGATING;
+
+                heading_bearing_ptr = (geo_spd_angle*)(&(can_msg_heading_bearing_ptr->data.qword));
+
+                //calculate the absolute difference between heading and bearing
+                difference_heading_bearing = (int32_t)(heading_bearing_ptr->bearing - heading_bearing_ptr->heading);
+
+                // Adding Zone Offset
+                if(difference_heading_bearing < 0)
+                {
+                    difference_heading_bearing += 360;
+                }
+
+                navigation_zone = getNavigationZone(difference_heading_bearing);
+
+                switch(navigation_zone) {
+
+                    case ZONE_NAVI_STR:
+                        //speed - normal, turn - straight
+                        motor_data.speed = NORMAL;
+                        motor_data.turn = STRAIGHT;
+
+                        break;
+
+                    case ZONE_NAVI_SR:
+                        //speed - normal, turn - slight right
+                        motor_data.speed = NORMAL;
+                        motor_data.turn = S_RIGHT;
+
+                        break;
+
+                    case ZONE_NAVI_HR:
+                        //speed - slow, turn - hard right
+                        motor_data.speed = SLOW;
+                        motor_data.turn = RIGHT;
+
+                        break;
+
+                    case ZONE_NAVI_UR:
+                        //speed - very slow, turn - hard right
+                        motor_data.speed = SLOW;
+                        motor_data.turn = RIGHT;
+
+                        break;
+
+                    case ZONE_NAVI_UL:
+                        //speed - very slow, turn - hard left
+                        motor_data.speed = SLOW;
+                        motor_data.turn = LEFT;
+
+                        break;
+
+                    case ZONE_NAVI_HL:
+                        //speed - slow, turn - hard left
+                        motor_data.speed = SLOW;
+                        motor_data.turn = LEFT;
+
+                        break;
+
+                    case ZONE_NAVI_SL:
+                        //speed - normal, turn - slight left
+                        motor_data.speed = NORMAL;
+                        motor_data.turn = S_LEFT;
+
+                        break;
+                }
+            }
+
+            LD.setNumber(nav_index + 1);    // Display which check point we are headed towards
+
+            break;
+
+        default:
+
+            // No other case should come in here, stop immediately
+            nav_status = STOPPED;
+
+            break;
+    }
+
+    if(mia_count_navigating == 0)
+    {
+       can_msg_motor_data.msg_id = MOTOR_DIRECTIONS_ID;
+       can_msg_motor_data.frame_fields.is_29bit = false;
+       can_msg_motor_data.frame_fields.data_len = sizeof(motor_direction);
+       memcpy(&can_msg_motor_data.data.qword, &motor_data, sizeof(motor_direction));
+
+       CAN_tx(MASTER_CNTL_CANBUS, &can_msg_motor_data, MASTER_CNTL_CAN_DELAY);
+    }
+}
+
+ZONE_NAVI getNavigationZone(uint32_t difference) {
+    ZONE_NAVI zone_info = ZONE_NAVI_STR;
+
+    if(((difference > ZONE_EDGE7) && (difference <= ZONE_EDGE8))|| ((difference >= ZONE_EDGE0) && (difference <= ZONE_EDGE1)))  {
+        zone_info = ZONE_NAVI_STR;
+    }
+
+    else if((difference > ZONE_EDGE1) && (difference <= ZONE_EDGE2)) {
+        zone_info = ZONE_NAVI_SR;
+    }
+
+    else if((difference > ZONE_EDGE2) && (difference <= ZONE_EDGE3)) {
+        zone_info = ZONE_NAVI_HR;
+    }
+
+    else if((difference > ZONE_EDGE3) && (difference <= ZONE_EDGE4)) {
+        zone_info = ZONE_NAVI_UR;
+    }
+
+    else if((difference > ZONE_EDGE4) && (difference <= ZONE_EDGE5)) {
+            zone_info = ZONE_NAVI_UL;
+    }
+
+    else if((difference > ZONE_EDGE5) && (difference <= ZONE_EDGE6)) {
+            zone_info = ZONE_NAVI_HL;
+    }
+
+    else if((difference > ZONE_EDGE6) && (difference <= ZONE_EDGE7)) {
+        zone_info = ZONE_NAVI_SL;
+    }
+
+    return zone_info;
+}
+
+uint64_t calculateDistance(geo_loc *geo_location_ref)
+{
+    float endLat = degreesToRadians(lat_array[nav_index]);
+    float endLong = degreesToRadians(long_array[nav_index]);
+    float startLat = degreesToRadians(geo_location_ref->latitude);
+    float startLong = degreesToRadians(geo_location_ref->longitude);
+
+    float dLong = endLong - startLong;
+    float dLat = endLat - startLat;
+
+    float b = ((sin(dLat/2))*(sin(dLat/2))) + (cos(startLat) * cos(endLat) * (sin(dLong/2))*sin(dLong/2));
+    float c = 2 * atan2(sqrt(b), sqrt(1-b));
+
+    uint64_t d = EARTH_RADIUS_KM * c * 1000;
+
+    return d;
 }

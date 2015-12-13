@@ -32,6 +32,7 @@
 #include "periodic_callback.h"
 #include "c_tlm_var.h"
 #include "sensor_controller.hpp"
+#include "ultrasonic_sensor.hpp"
 #include "can_common.hpp"
 // Include file for telemetry --> ALso need to turn on #define at sys_config.h (SYS_CFG_ENABLE_TLM)
 #include "tlm/c_tlm_comp.h"
@@ -75,7 +76,7 @@ void period_10Hz(void)
 
 void period_100Hz(void)
 {
-
+    interrupt_based_ping_sensor();          // Trigger interrupt based sensor
 }
 
 void period_1000Hz(void)

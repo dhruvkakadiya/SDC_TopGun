@@ -391,16 +391,19 @@ static inline bool SENSOR_TX_SENSOR_SONARS_decode(SENSOR_TX_SENSOR_SONARS_t *to,
     bits_from_byte = ((bytes[0] >> 0) & 0xff); ///< 8 bit(s) from B0
     raw_signal    |= (bits_from_byte << 0);
     to->SENSOR_SONARS_front_left = (raw_signal * 1.0) + (0);
+    to->SENSOR_SONARS_front_left = bytes[0];
 
     raw_signal = 0;
     bits_from_byte = ((bytes[1] >> 0) & 0xff); ///< 8 bit(s) from B8
     raw_signal    |= (bits_from_byte << 0);
     to->SENSOR_SONARS_front_right = (raw_signal * 1.0) + (0);
+    to->SENSOR_SONARS_front_right = bytes[1];
 
     raw_signal = 0;
     bits_from_byte = ((bytes[2] >> 0) & 0xff); ///< 8 bit(s) from B16
     raw_signal    |= (bits_from_byte << 0);
     to->SENSOR_SONARS_front_center = (raw_signal * 1.0) + (0);
+    to->SENSOR_SONARS_front_center = bytes[2];
 
     raw_signal = 0;
     bits_from_byte = ((bytes[3] >> 0) & 0xff); ///< 8 bit(s) from B24

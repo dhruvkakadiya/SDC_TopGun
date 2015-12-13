@@ -187,6 +187,7 @@ typedef struct{
     uint64_t speed:8;               // Speed as measured by the GPS sensor
     uint64_t heading:16;            // Heading from the Geo controller
     uint64_t bearing:16;            // Bearing calculated by the Geo controller
+    uint64_t distance:24;
 
 }__attribute__((__packed__)) geo_spd_angle;
 

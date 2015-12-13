@@ -116,3 +116,7 @@ uint16_t adc0_get_reading(uint8_t channel_num)
 
     return result;
 }
+
+void my_adc0_start_conversion(uint8_t channel_num){
+    adc0_start_conversion(channel_num);
+}

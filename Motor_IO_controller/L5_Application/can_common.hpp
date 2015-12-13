@@ -15,8 +15,8 @@
 
 #define MOTORIO_CNTL_CANBUS               (can1)      // Use can1
 #define MOTORIO_CNTL_CANBAUD              (100)       // 100kbps baud rate
-#define MOTORIO_CNTL_CANTXQ               ( 5 )       // Transmit q size 5
-#define MOTORIO_CNTL_CANRXQ               ( 5 )       // Receive q size 5
+#define MOTORIO_CNTL_CANTXQ               ( 20 )       // Transmit q size 5
+#define MOTORIO_CNTL_CANRXQ               ( 80 )       // Receive q size 5
 #define MOTORIO_CNTL_CAN_TIMEOUT          ( 0 )       // Timeout for sending can message
 #define MOTORIO_CNTL_SYNC_TIME            ( 500 )     // Allow 500 ms wait for ack
 #define MOTORIO_CNTL_SYNC_MAX_TIME        ( GEO_CNTL_SYNC_TIME * 20 ) // Wait 10s max
