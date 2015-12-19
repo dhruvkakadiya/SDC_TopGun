@@ -42,11 +42,12 @@ bool geo_controller_init( void );    // Initialization routing for Geo controlle
 extern "C"{
 #endif
 
-void geo_send_gps(GEO_TO_SEND);
-void geo_send_heading(GEO_TO_SEND, geo_location&);
+void geo_send_gps();
+void geo_send_heading();
 void geo_send_heartbeat();
-bool receive_master_checkpoint(geo_location&);
-uint16_t calculateBearing(geo_location&);
+bool receive_master_checkpoint();
+uint64_t calculateDistance(geo_location&);
+uint32_t calculateBearing(geo_location&);
 void geo_check_master_reset();
 
 #ifdef __cplusplus

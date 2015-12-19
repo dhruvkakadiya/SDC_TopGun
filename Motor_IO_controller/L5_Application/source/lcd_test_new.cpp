@@ -23,6 +23,10 @@ bool flag_home = false;
 bool flag_home_page = false;
 char lcd_char;
 
+float dc_slow = 6.35;
+float dc_normal = 6.28;
+float dc_turbo = 6.20;
+
 lcd_screen_t lcdscreen = home;      // Enum variable for current screen on LCD
 extern GEO_TX_GEO_SPEED_ANGLE_t geo_msg;
 extern DRIVER_TX_MOTORIO_DIRECTION_t motor_msg;
@@ -55,6 +59,9 @@ void flag_page_change(bool* flagp){
 /* Function to initialize UART for LCD */
 void lcd_init(void) {
     U2.init(LCD_UART_BAUD,LCD_UART_RXQSIZE,LCD_UART_TXQSIZE);
+    dc_slow = 6.35;
+    dc_normal = 6.28;
+    dc_turbo = 6.20;
 }
 
 void put_comm(char a,char b,char c, char d,char e) {
@@ -91,15 +98,19 @@ void lcd_print(){
      static bool headlights_on = false;
      bool flag_headlight = false;
 
-     if(Bytes6[1]==0x06 && Bytes6[2]==0x00) {
+     if((sensor_lcd.data.bytes[0]!=0)||(sensor_lcd.data.bytes[1]!=0)||(sensor_lcd.data.bytes[2]!=0)){
+         put_comm(0x01,0x16,0x00,0x00,0x00);
+     }
+
+     if(Bytes6[1]==0x06 && Bytes6[2]==0x03) {
          lcdscreen=Geo;
          flag_change(&flag_geo);
      }
-     else if(Bytes6[1]==0x06 && Bytes6[2]==0x01) {
+     else if(Bytes6[1]==0x06 && Bytes6[2]==0x00) {
          lcdscreen=Sensors;
          flag_change(&flag_sensors);
      }
-     else if(Bytes6[1]==0x06 && Bytes6[2]==0x02) {
+     else if(Bytes6[1]==0x06 && Bytes6[2]==0x01) {
           lcdscreen=Motor;
           flag_change(&flag_motor);
      }
@@ -197,18 +208,40 @@ void lcd_print(){
       }
       else if(lcdscreen == home){
           put_comm(0x01, 0x1a, 0x00, 0x00, sensor_bat_msg.SENSOR_BAT_cmd); // setting the battery meter here
-          if(Bytes6[1]==0x21 && Bytes6[2]==0x00){
+          if(Bytes6[1]==0x21 && Bytes6[2]==0x01){
               headlights_on = headlights_on? false:true;
               if(headlights_on)
-                  put_comm(0x01, 0x13, 0x00, 0x00, 0x01);
+                  put_comm(0x01, 0x13, 0x01, 0x00, 0x01);
               else
-                  put_comm(0x01, 0x13, 0x00, 0x00, 0x00);
+                  put_comm(0x01, 0x13, 0x01, 0x00, 0x00);
               Bytes6[1] = 0x00;
           }
       }
       else if(lcdscreen == Motor){
           //printf("speed:%d\n",motor_msg.MOTORIO_DIRECTION_speed_cmd);
           //printf("turn:%d\n",motor_msg.MOTORIO_DIRECTION_turn_cmd);
+          if(Bytes6[1]==0x21 && Bytes6[2]==0x00)
+              dc_slow = dc_slow-0.01;
+          else if(Bytes6[1]==0x21 && Bytes6[2]==0x04)
+              dc_slow = dc_slow+0.01;
+          else if(Bytes6[1]==0x21 && Bytes6[2]==0x02)
+              dc_normal =dc_normal-0.01;
+          else if(Bytes6[1]==0x21 && Bytes6[2]==0x05)
+              dc_normal = dc_normal+0.01;
+          else if(Bytes6[1]==0x21 && Bytes6[2]==0x03)
+              dc_turbo = dc_turbo-0.01;
+          else if(Bytes6[1]==0x21 && Bytes6[2]==0x06)
+              dc_turbo = dc_turbo+0.01;
+          Bytes6[1] = 0x00; // resetting the value so that the if/else conditions r not entered again and again
+
+          static char string[30]={0};
+          sprintf(string,"%.2f", dc_slow);
+          put_string(string, 4,(uint8_t)strlen(string));                //Print Latitude on LCD
+          sprintf(string,"%.2f", dc_normal);
+          put_string(string, 5,(uint8_t)strlen(string));                //Print Longitude on LCD
+          sprintf(string,"%.2f", dc_turbo);
+          put_string(string, 6,(uint8_t)strlen(string));
+
           put_comm(0x01, 0x0b, 0x06, 0x00, motor_lcd.data.bytes[0]);        //Print Motor Speed data on LCD
           put_comm(0x01, 0x10, 0x00, 0x00, motor_lcd.data.bytes[1]);        //Print Motor turn data on LCD
           if(motor_msg.MOTORIO_DIRECTION_turn_cmd==back)

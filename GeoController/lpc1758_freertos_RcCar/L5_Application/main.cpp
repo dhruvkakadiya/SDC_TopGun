@@ -28,11 +28,48 @@
 #include "geo_controller.hpp"
 #include "io.hpp"
 #include "imu.hpp"
-#include "soft_timer.hpp"
 #include "stdio.h"
 #include "stdlib.h"
+#include "GPIO.hpp"
+#include "queue.h"
 #include "GPS.hpp"
+#include "uart2.hpp"
+#include "utilities.h"
+#include "printf_lib.h"
 
+QueueHandle_t gps_queue1;
+volatile bool flag_received = false;
+char gps_global_string[100];
+
+
+geo_location gps_data_dec;
+
+uint8_t speed_gps;
+
+ extern "C"
+ {
+    void UART2_IRQHandle()
+    {
+        static  char GPS_buffer1[100];
+        static int i_new=0;
+        while(!(LPC_UART2-> LSR & 0x01));
+        GPS_buffer1[i_new]= LPC_UART2 -> RBR;
+        if(GPS_buffer1[i_new]=='\n') {
+           GPS_buffer1[i_new]='\0';
+           flag_received = true;
+           if(xQueueSendFromISR(gps_queue1, &GPS_buffer1 , 0)) {
+
+           }
+           else{
+
+           }
+           i_new=0;
+        }
+        else{
+        i_new++;
+        }
+    }
+ }
 
 /**
  * The main() creates tasks or "threads".  See the documentation of scheduler_task class at scheduler_task.hpp
@@ -48,12 +85,102 @@
  *        In either case, you should avoid using this bus or interfacing to external components because
  *        there is no semaphore configured for this bus and it should be used exclusively by nordic wireless.
  */
+
+ void gps_uart(void *p)
+ {
+     while(1){
+         if(xQueueReceiveFromISR(gps_queue1,&gps_global_string,0)) {
+             if(flag_received==true)
+              {
+
+                 static int lat_degree = 0;
+                 static float lat_minute = 0;
+                 static int long_degree = 0;
+                 static float long_minute = 0;
+                 static float lat_dec;
+                 static float long_dec;
+
+                 if(gps_global_string[18] == 'A')
+                    {
+
+                     lat_degree = get_lat_degree1();
+                     lat_minute = get_lat_minute1();
+                     long_degree =get_long_degree1();
+                     long_minute =get_long_minute1();
+                     speed_gps = (uint8_t)(1.150779)*get_speed_GPS1();
+
+                     lat_dec = get_decimal1(lat_degree, lat_minute);
+                     long_dec = get_decimal1(long_degree, long_minute);
+
+                     gps_data_dec.latitude = lat_dec;
+                     gps_data_dec.longitude = (-1)*long_dec;
+                     flag_received = false;
+
+                    }
+
+                 if(gps_global_string[18] == 'V') {
+                     gps_data_dec.latitude = 0.0;
+                     gps_data_dec.longitude = 0.0;
+                     flag_received = false;
+                 }
+              }
+         }
+
+     }
+ }
+
+
 int main(void)
 {
-    SoftTimer init_timer(GEO_INIT_LED_TIME);
-    gps_init();  // It will set the initial configuration for the GPS sensor.
+    gps_queue1 = xQueueCreate(2, 100 * sizeof(char));
+    GPIO myPin(P2_5);   // Control P1.19
+    myPin.setAsOutput();
+    myPin.setHigh();
 
-    /**
+  /* GPIO myPin_IPU(P2_2);   // Control P1.19
+      myPin_IPU.setAsOutput();
+      myPin_IPU.setLow();
+      vTaskDelay(10);
+      myPin_IPU.setHigh();
+      */
+
+   char b[] = "$PMTK314,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0*29\r\n";
+   char c[] =  "$PMTK220,100*2F\r\n";
+   int i = 0;
+   uart2init();
+   for( i = 0; b[i] != '\0'; i++)
+   {
+       LPC_UART2 ->THR = b[i];
+       delay_ms(1);
+   }
+    i =0;
+   for( i = 0; c[i] != '\0'; i++)
+      {
+          LPC_UART2 ->THR = c[i];
+          delay_ms(1);
+      }
+   NVIC_EnableIRQ(UART2_IRQn);
+
+#if 0
+    while(1){
+        //printf("hello\n");
+        if(flag_received==true)
+        {
+            printf("%s\n",GPS_new_buffer1);
+            flag_received = false;
+        }
+
+        else{
+           // printf("Failed:\n");
+        }
+        //delay_ms(10);
+       // vTaskDelay(10);
+    }
+#endif
+
+   xTaskCreate(gps_uart, "GPS_UART", 2048, NULL,1,NULL);
+
+   /**
      * A few basic tasks for this bare-bone system :
      *      1.  Terminal task provides gateway to interact with the board through UART terminal.
      *      2.  Remote task allows you to use remote control to interact with the board.
@@ -88,10 +215,14 @@ int main(void)
      //   }
    // }
 
+
+
+
    scheduler_add_task(new IMUTask(PRIORITY_CRITICAL));
+ //  scheduler_add_task(new GPSTask(PRIORITY_CRITICAL));
 
     /* Call controller init routine before starting periodic call backs */
-    bool status = geo_controller_init();
+    geo_controller_init();
 
     /* Change "#if 0" to "#if 1" to run period tasks; @see period_callbacks.cpp */
     #if 1

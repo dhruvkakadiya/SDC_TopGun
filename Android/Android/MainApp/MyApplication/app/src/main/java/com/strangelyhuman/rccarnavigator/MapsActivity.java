@@ -15,6 +15,8 @@ import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
+import android.os.Handler;
+import android.os.Message;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -22,6 +24,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 import android.support.v7.widget.Toolbar;
 
@@ -33,6 +36,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.UiSettings;
+import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
@@ -52,6 +56,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
+import java.util.Vector;
 
 import javax.xml.transform.Source;
 
@@ -61,67 +66,55 @@ import javax.xml.transform.Source;
         private GoogleMap mMap; // Might be null if Google Play services APK is not available.
         ArrayList<LatLng> MarkerPoints;
 
+
         private static String TAG = "Maps Activity";
         String CarRoute = "";
         int Count_Ordinates = 0;
+        boolean startButtonVariable = false;
         double destinationLat;
         double destinationLon;
+        int lat_lon_count = 1;
 
-        Button btnOn, btnOff,btOn,btConnect,btdisconnect, sndrt;
+        // source location lat and long for setting source marker automatically
+        double source_lat;
+        double source_long;
+        LatLng CarSource;
+
+        Button btnOn, btnOff,btOn,btConnect,btdisconnect, sndrt, carLocation;
         int BT_CONNECT_CODE = 1;
         int connect = 0;
         int start_stop = 0;
         int snd_route_en = 0;
+        int carUpdate = 0;
+        Handler mHandler;
+        TextView txt;
+
+        final int RECEIVE_MESSAGE = 1;        // Status  for Handler
+
         private BluetoothAdapter btAdapter;
         private BluetoothSocket btSocket;
-        private OutputStream outStream = null;
-        private InputStream instream = null;
+
+        private ConnectedThread mConnectedThread;
 
         // SPP UUID service
         private static final UUID MY_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
-        // MAC-address of Bluetooth module (you must edit this line)
+        //HC-06 module MAC -- slave only
         private static String address = "20:15:03:03:09:75";
 
+        //HC=05 module MAC --  master/slave
+        //private static String address = "20:15:08:13:10:18";
+
         private static String tx_data1 = "0 \n";
-        private static String tx_data2 = "0 \n";
+       // private static String tx_data2 = "0 \n";
 
-
+        String disp_temp_str;
 
         public boolean isConnected() {
             ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
 
             return connectivityManager.getActiveNetworkInfo() != null && connectivityManager.getActiveNetworkInfo().isConnectedOrConnecting();
         }
-
-//    public class makeRouteDialogFragment extends DialogFragment {
-//
-//        @Override
-//        public Dialog onCreateDialog(Bundle savedInstanceState) {
-//            Bundle args = getArguments();
-//            String title = args.getString("Plot a Route");
-//            String message = args.getString("Would you like to plot a route between the two points?");
-//
-//            return new AlertDialog.Builder(getActivity())
-//                    .setTitle(title)
-//                    .setMessage(message)
-//
-//                    .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-//                        @Override
-//                        public  void onClick(DialogInterface dialog, int which) {
-//                            getTargetFragment().onActivityResult(getTargetRequestCode(), Activity.RESULT_OK, null);
-//                        }
-//                    })
-//
-//                    .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
-//                        @Override
-//                        public void onClick(DialogInterface dialog, int which) {
-//                            getTargetFragment().onActivityResult(getTargetRequestCode(), Activity.RESULT_CANCELED, null);
-//                        }
-//                    })
-//                    .create();
-//        }
-//    }
 
         @Override
         protected void onCreate(Bundle savedInstanceState) {
@@ -137,7 +130,24 @@ import javax.xml.transform.Source;
             btConnect = (Button) findViewById(R.id.btConnect);
             btdisconnect = (Button)findViewById(R.id.btdisconnect);
             sndrt = (Button) findViewById(R.id.sndrt);
+            txt = (TextView) findViewById(R.id.txt);
+            carLocation = (Button) findViewById(R.id.carLoc);
             btAdapter = BluetoothAdapter.getDefaultAdapter();
+
+            //Car Source Marker Options
+
+            carLocation.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (start_stop == 1 && carUpdate == 1) {
+                        LatLng lCarSource = new LatLng(source_lat, source_long);
+
+                        CarSource = lCarSource;
+                        Toast.makeText(getApplicationContext(), CarSource.latitude + " " + CarSource.longitude,Toast.LENGTH_LONG ).show();
+                        mMap.addMarker(new MarkerOptions().position(CarSource).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)));
+                    }
+                }
+            });
 
             btOn.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -148,8 +158,9 @@ import javax.xml.transform.Source;
 
             btnOn.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
+                   // mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(CarSource, 6));
                     if(connect == 1 && start_stop == 0) {
-                        sendData(tx_data1);
+                        mConnectedThread.sendData(tx_data1);
                         start_stop = 1;
                         Toast.makeText(getBaseContext(), "Car Start", Toast.LENGTH_SHORT).show();
                     }
@@ -159,7 +170,7 @@ import javax.xml.transform.Source;
             btnOff.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                     if(connect == 1 && start_stop == 1) {
-                        sendData(tx_data2);
+                        mConnectedThread.sendData(tx_data1);
                         start_stop = 0;
                         Toast.makeText(getBaseContext(), "Car Stop", Toast.LENGTH_SHORT).show();
                     }
@@ -188,19 +199,68 @@ import javax.xml.transform.Source;
                 @Override
                 public void onClick(View v) {
                     if((connect == 1) && (snd_route_en == 1)) {
-                        sendData("" + Count_Ordinates + " " + CarRoute + "\n");
+                        mConnectedThread.sendData("" + Count_Ordinates + " " + CarRoute + "\n");
                         Toast.makeText(getBaseContext(), "Sending Route...", Toast.LENGTH_SHORT).show();
                         Log.d(TAG, CarRoute);
                     }
                 }
             });
 
+            mHandler = new Handler() {
+                @Override
+                public void handleMessage(Message msg) {
+                    byte[] writeBuf = (byte[]) msg.obj;
+                    int begin = (int)msg.arg1;
+                    int end = (int)msg.arg2;
+
+                    switch(msg.what) {
+                        case 1:
+                            String writeMessage = new String(writeBuf);
+                            writeMessage = writeMessage.substring(begin, end);
+                            disp_temp_str = writeMessage;
+                            if(lat_lon_count == 1)
+                            {
+                                source_lat = Double.parseDouble(writeMessage);
+                                Log.d(TAG, Double.toString(source_lat));
+                                Log.d(TAG, disp_temp_str);
+                                lat_lon_count = 2;
+                            }
+                            else if(lat_lon_count == 2)
+                            {
+                                source_long = Double.parseDouble(writeMessage);
+                                Log.d(TAG, Double.toString(source_long));
+                                Log.d(TAG, disp_temp_str);
+                                lat_lon_count = 1;
+                                carUpdate = 1;
+                            }
+
+                            txt.setText("Data from HC-05: " + source_lat + " " + source_long);            // update TextView
+                            break;
+                    }
+                }
+            };
+
+
             //check if your phone is connected to the internet
-            if (!isConnected()) {
+            if An(!isConnected()) {
                 Toast.makeText(MapsActivity.this, "Please ensure that you are connected to the internet", Toast.LENGTH_LONG).show();
             }
 
-            //AlertDialog dialog = new makeRouteDialogFragment()
+            //location marker options
+            final MarkerOptions locationMarkerOptions = new MarkerOptions();
+            locationMarkerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
+            locationMarkerOptions.title("Source");
+            locationMarkerOptions.draggable(false);
+
+            //location button override
+            mMap.setOnMyLocationButtonClickListener(new GoogleMap.OnMyLocationButtonClickListener() {
+                @Override
+                public boolean onMyLocationButtonClick() {
+                    //check if start_stop variable is equal to 1 and place a marker at SourceLat and SourceLong
+                    Toast.makeText(MapsActivity.this, "Finding your location...", Toast.LENGTH_SHORT).show();
+                    return false;
+                }
+            });
 
             //initialize your latlng array
             MarkerPoints = new ArrayList<LatLng>();
@@ -215,6 +275,7 @@ import javax.xml.transform.Source;
                         return;
                     }
 
+
                     //Adding a new point
                     MarkerPoints.add(point);
 
@@ -225,41 +286,51 @@ import javax.xml.transform.Source;
                     options.position(point);
 
                     if (MarkerPoints.size() == 1) {
-                        options.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
-                        options.draggable(true);
-                        options.title("Source");
-                        Toast.makeText(MapsActivity.this, "Add a Origin Marker", Toast.LENGTH_SHORT).show();
-                    }
-
-                    if (MarkerPoints.size() == 2) {
                         options.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
                         options.title("Destination" + " " + point.latitude + " " + point.longitude);
                         options.draggable(true);
                         Toast.makeText(MapsActivity.this, "Add a Destination Marker", Toast.LENGTH_SHORT).show();
                     }
 
-                 // DestinationMarker += MarkerPoints.get(1).latitude + " " + MarkerPoints.get(1).longitude;
+//                    if (MarkerPoints.size() == 1) {
+//                        options.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
+//                        options.draggable(true);
+//                        options.title("Source");
+//                        Toast.makeText(MapsActivity.this, "Add a Origin Marker", Toast.LENGTH_SHORT).show();
+//                    }
+
+
+//                    if (MarkerPoints.size() == 2) {
+//                        options.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
+//                        options.title("Destination" + " " + point.latitude + " " + point.longitude);
+//                        options.draggable(true);
+//                        Toast.makeText(MapsActivity.this, "Add a Destination Marker", Toast.LENGTH_SHORT).show();
+//                    }
+
+                    // DestinationMarker += MarkerPoints.get(1).latitude + " " + MarkerPoints.get(1).longitude;
+
+
+
 
 
                     //add marker to the map
                     mMap.addMarker(options);
-                    if (MarkerPoints.size() == 2) {
-                        LatLng origin = MarkerPoints.get(0);
-                        LatLng destination = MarkerPoints.get(1);
+                    if (MarkerPoints.size() == 1) {
+                        //LatLng origin = MarkerPoints.get(0); //set your origin point
+                        LatLng destination = MarkerPoints.get(0);
                         //getting a string for the directions api
                         int tempLat = (int) (destination.latitude * 1000000);
                         destinationLat = tempLat / 1000000d;
                         int tempLon = (int) (destination.longitude * 1000000);
                         destinationLon = tempLon / 1000000d;
                         Log.d(TAG, Double.toString(destinationLat) + " " + Double.toString(destinationLon));
-                        String url = getDirectionsUrl(origin, destination);
+                        String url = getDirectionsUrl(CarSource, destination);
                         DownloadTask downloadTask1 = new DownloadTask();
                         downloadTask1.execute(url);
                         snd_route_en = 1;
                     }
                 }
             });
-            //add an event for button route
         }
 
         private BluetoothSocket createBluetoothSocket(BluetoothDevice device) throws IOException {
@@ -296,48 +367,13 @@ import javax.xml.transform.Source;
             finish();
         }
 
-        private void sendData(String message) {
-            byte[] msgBuffer = message.getBytes();
-
-            Log.d(TAG, "...Send data: " + message + "...");
-
-            try {
-                outStream.write(msgBuffer);
-                Toast.makeText(getApplicationContext(),"data sent",Toast.LENGTH_LONG).show();
-            } catch (IOException e) {
-                String msg = "In onResume() and an exception occurred during write: " + e.getMessage();
-                if (address.equals("00:00:00:00:00:00"))
-                    msg = msg + ".\n\nUpdate your server address from 00:00:00:00:00:00 to the correct address on line 35 in the java code";
-                msg = msg +  ".\n\nCheck that the SPP UUID: " + MY_UUID.toString() + " exists on server.\n\n";
-
-                errorExit("Fatal Error", msg);
-            }
-        }
 
         private void disconnect() {
-            try{
-                instream = btSocket.getInputStream();
-            }catch (IOException e){
-                errorExit("Fatal Error", "In onResume() and input stream creation failed:" + e.getMessage() + ".");
-            }
-
-            if (instream != null) {
-                try {instream.close();} catch (Exception e) {}
-                instream = null;
-            }
-
-            if (outStream != null) {
-                try {outStream.close();} catch (Exception e) {}
-                outStream = null;
-            }
-
-            if (btSocket != null) {
-                try {btSocket.close();
-                    Toast.makeText(getApplicationContext(), "Disconnected", Toast.LENGTH_SHORT).show();
-                    connect = 0;
-                } catch (Exception e) {}
-                btSocket = null;
-            }
+            try {
+                btSocket.close();
+                connect = 0;
+                Toast.makeText(getApplicationContext(), "Disconnected", Toast.LENGTH_SHORT).show();
+            } catch (IOException e) { }
 
         }
 
@@ -378,12 +414,8 @@ import javax.xml.transform.Source;
             // Create a data stream so we can talk to server.
             Log.d(TAG, "...Create Socket...");
 
-            try {
-                outStream = btSocket.getOutputStream();
-            } catch (IOException e) {
-                errorExit("Fatal Error", "In onResume() and output stream creation failed:" + e.getMessage() + ".");
-
-            }
+            mConnectedThread = new ConnectedThread(btSocket);
+            mConnectedThread.start();
         }
 
         public void onActivityResult(int req_code, int res_code, Intent data)
@@ -402,12 +434,75 @@ import javax.xml.transform.Source;
             }
         }
 
+        private class ConnectedThread extends Thread {
+            private final InputStream mmInStream;
+            private final OutputStream mmOutStream;
+
+            public ConnectedThread(BluetoothSocket socket) {
+                InputStream tmpIn = null;
+                OutputStream tmpOut = null;
+
+                // Get the input and output streams, using temp objects because
+                // member streams are final
+                try {
+                    tmpIn = socket.getInputStream();
+                    tmpOut = socket.getOutputStream();
+                } catch (IOException e) { }
+
+                mmInStream = tmpIn;
+                mmOutStream = tmpOut;
+            }
+
+            public void run() {
+                byte[] buffer = new byte[1024];
+                int begin = 0;
+                int bytes = 0;
+                while (true) {
+                    try {
+                        bytes += mmInStream.read(buffer, bytes, buffer.length - bytes);
+                        for(int i = begin; i < bytes; i++) {
+                            if(buffer[i] == "\n\r".getBytes()[0]) {
+                                mHandler.obtainMessage(1, begin, i, buffer).sendToTarget();
+                                begin = i + 1;
+                                if(i == bytes - 1) {
+                                    bytes = 0;
+                                    begin = 0;
+                                }
+                            }
+                        }
+                    } catch (IOException e) {
+                        break;
+                    }
+                }
+            }
+
+            private void sendData(String message) {
+                byte[] msgBuffer = message.getBytes();
+
+                Log.d(TAG, "...Send data: " + message + "...");
+
+                try {
+                    mmOutStream.write(msgBuffer);
+                    Toast.makeText(getApplicationContext(),"data sent",Toast.LENGTH_LONG).show();
+                } catch (IOException e) {
+                    String msg = "In onResume() and an exception occurred during write: " + e.getMessage();
+                    if (address.equals("00:00:00:00:00:00"))
+                        msg = msg + ".\n\nUpdate your server address from 00:00:00:00:00:00 to the correct address on line 35 in the java code";
+                    msg = msg +  ".\n\nCheck that the SPP UUID: " + MY_UUID.toString() + " exists on server.\n\n";
+
+                    errorExit("Fatal Error", msg);
+                }
+            }
+
+        }
+
+
         private String getDirectionsUrl(LatLng origin, LatLng destination) {
             //Origin of the route
             String originStr = "origin=" + origin.latitude + "," + origin.longitude;
             String destinationStr = "destination=" + destination.latitude + "," + destination.longitude;
             String output = "json";
-            String parameters = originStr + "&" + destinationStr + "&mode=walking&key=AIzaSyCwfUYxgA3FXrxX6RqlOJVbf16lHGa7uSs";
+            String parameters = originStr + "&" + destinationStr + "&mode=bicycling&key=AIzaSyCwfUYxgA3FXrxX6RqlOJVbf16lHGa7uSs";
             String path = origin.latitude + "," + origin.longitude + "|" + destination.latitude + "," + destination.longitude;
             //building the string for the web service
             String url = "https://maps.googleapis.com/maps/api/directions/" + output + "?" + parameters;
@@ -523,7 +618,7 @@ import javax.xml.transform.Source;
                     CarRoute = "";
                     Count_Ordinates = 0;
                     //fetching points in the ith route
-                    for (int j = 0; j < path.size(); j++) {
+                    for (int j = 1; j < path.size(); j++) {
                         HashMap<String, String> point = path.get(j);
 
                         double lat = Double.parseDouble(point.get("lat"));
@@ -533,7 +628,10 @@ import javax.xml.transform.Source;
                         //CarRoute +=  "" + lat + " " + lng + " ";
                         //Log.d(TAG, CarRoute);
                         //Log.d(TAG, position.toString());
-                        if ((j % 2 == 0)) {
+                        if ((j % 2 == 1)  && path.size() > 15) {
+                            //skip this point
+                            continue;
+                        }
                             mMap.addMarker(markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))
                                     .position(position)
                                     .title("latitude: " + lat + ", " + "longitude: " + lng));
@@ -546,16 +644,24 @@ import javax.xml.transform.Source;
                             int temp_Lon = (int) (lng * 1000000);
                             templon_ = temp_Lon / 1000000d;
 
+
                             CarRoute += "" + templat_ + " " + templon_ + " ";
                             ++Count_Ordinates;
-                        }
+
+
+                        //plot points on the map
                         points.add(position);
 
                     }
-                    CarRoute += destinationLat + " " + destinationLon;
-                    Count_Ordinates +=1;
+
+                    //CarRoute += destinationLat + " " + destinationLon;
+                    //Count_Ordinates +=1;
                     Log.d(TAG, CarRoute);
                     Log.d(TAG, Integer.toString(Count_Ordinates));
+
+                    //check if the number of coordinates exceeds 15
+
+
                     //adding all points in the route to lineOptions
                     lineOptions.addAll(points);
                     lineOptions.width(5);

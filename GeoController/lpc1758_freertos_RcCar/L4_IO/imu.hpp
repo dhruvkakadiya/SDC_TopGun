@@ -17,6 +17,8 @@
 #include "scheduler_task.hpp"
 #include "queue.h"
 
+#define HEADING_OFFSET 60
+
 #define PIN_OFF false
 #define PIN_ON true
 
@@ -99,6 +101,8 @@ class IMUTask : public scheduler_task
             LOG_DEBUG("IMUTask : Initializing Task");
             // Power on the IMU Interface
             IMUInterface;
+
+          //  IMUInterface.resetIMU();
 
             LOG_DEBUG("IMUTask : Initiializing Task Done");
     }

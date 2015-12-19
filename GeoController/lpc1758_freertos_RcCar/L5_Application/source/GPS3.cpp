@@ -9,7 +9,6 @@
 #include "string.h"
 #include "stdio.h"
 #include "stdlib.h"
-#include <string>
 
 extern char gps_global_string[100];
 
@@ -38,9 +37,8 @@ float get_decimal1(int deg, float minute){
 
 
 int get_lat_degree1(void){
+
     char buffer[10] = {'\0'};
-
-
     buffer[0] = gps_global_string[20];
     buffer[1] = gps_global_string[21];
     return atoi(buffer);

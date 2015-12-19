@@ -46,6 +46,7 @@
 
 // 1 - No Bluetooth App; 0 - Control via Bluetooth App
 #define BT_APP ( 1 )
+#define NAVIGATION_DEBUG (0)
 
 // Zone Thresholds
 #define ZONE_NEAR_THRESHOLD ( 50 )
@@ -55,9 +56,10 @@
 #define EARTH_RADIUS_KM 6373
 #define degreesToRadians(angleDegrees) (angleDegrees * M_PI / 180.0)
 
-#define GEO_LOC_MIA_MAX_COUNT   100
-#define GEO_HEADING_BEARING_MIA_MAX_COUNT 100
-#define MIN_DISTANCE_TO_CHKPT   15
+#define GEO_LOC_MIA_MAX_COUNT   (100)
+#define GEO_HEADING_BEARING_MIA_MAX_COUNT (100)
+#define MIN_DISTANCE_TO_CHKPT   (3)
+#define FULL_PRECISION_RANGE    (3)
 
 enum MASTER_ACK {
     NACK = 0,

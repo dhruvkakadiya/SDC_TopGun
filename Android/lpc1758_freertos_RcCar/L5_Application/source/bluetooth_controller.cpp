@@ -54,8 +54,8 @@ bool bluetooth_controller_sync()
     else
         PRINT("\ncan init successful");
 
-    const can_std_id_t slist[]      = {CAN_gen_sid(can_controller, MASTER_SYNC_ACK_ID), CAN_gen_sid(can_controller, CHECKPOINT_REQ_ID)};
-    CAN_setup_filter(slist, 2, NULL, 0, NULL, 0, NULL, 0);
+    const can_std_id_t slist[]      = {CAN_gen_sid(can_controller, MASTER_SYNC_ACK_ID), CAN_gen_sid(can_controller, CHECKPOINT_REQ_ID), CAN_gen_sid(can_controller, GEO_LOC_DATA_ID), CAN_gen_sid(can_controller, 0xFFFF)};
+    CAN_setup_filter(slist, 4, NULL, 0, NULL, 0, NULL, 0);
     //CAN_bypass_filter_accept_all_msgs();
     CAN_reset_bus(can_controller);
 

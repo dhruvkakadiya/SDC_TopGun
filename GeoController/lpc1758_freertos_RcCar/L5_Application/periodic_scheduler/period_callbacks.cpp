@@ -31,22 +31,23 @@
 #include <stdint.h>
 #include "periodic_callback.h"
 #include "geo_controller.hpp"
-#include "GPS.hpp"
 #include <stdio.h>
+#include "io.hpp"
 
-
-
+extern GEO_TO_SEND a;
 /// This is the stack size used for each of the period tasks
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
-
 
 void period_1Hz(void)
 {
 
-
-   // geo_send_heartbeat();
-   // geo_check_master_reset();
-
+    if(!receive_master_checkpoint())
+   {
+      // LE.off(1);
+    }
+    else{
+      //  LE.on(1);
+    }
 }
 
 void period_10Hz(void)
@@ -57,31 +58,29 @@ void period_10Hz(void)
      * Don't change the order of these calls.
      * If you change then call gps getters in both functions
      */
-    gps_data();
-    //  geo_send_gps();
-    geo_location current_checkpoint_data;
-    GEO_TO_SEND a;
-    if(receive_master_checkpoint(current_checkpoint_data))
-    {
-        a = GEO_DATA_TO_SEND;
-        geo_send_gps(a);
-        geo_send_heading(a, current_checkpoint_data);
+#if 1
+    if( a == GEO_DATA_TO_SEND){
+     geo_send_gps();
+     geo_send_heading();
     }
-    else
-    {
-     a = GEO_DO_NOT_SEND;
-     geo_send_gps(a);
-     geo_send_heading(a,current_checkpoint_data);
-    }
+#endif
 
+#if 0
+    geo_send_gps();
+    geo_send_heading();
+#endif
 }
+
+
 
 void period_100Hz(void)
 {
+
     /* Nothing will be done here */
 }
 
 void period_1000Hz(void)
 {
+
     /*Nothing will be done here */
 }

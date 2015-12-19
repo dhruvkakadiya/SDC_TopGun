@@ -11,10 +11,13 @@
 
 #define DC_ON                               1
 #define SERVO_ON                            1
-#define SPEED_FEEDBACK                      0
+#define SPEED_FEEDBACK                      1
+#define SWITCH_FEEDBACK                     1
 #define LIGHT_SENSOR_CHANNEL                4
+#define RPM_DEAD_SECOND_COUNT               4
 
 #define CAN_ERROR_LED                       4
+#define RPM_LED                             3
 #define SPEED_FACTOR_ERROR                  4
 
 #define SPEED_VAR_FACTOR                    0.05
@@ -26,8 +29,8 @@
 
 #define DC_STOP                             7.0
 
-#define DC_THRESH_SLOW                      6.2
-#define DC_THRESH_NORMAL                    6.05
+#define DC_THRESH_SLOW                      6.1
+#define DC_THRESH_NORMAL                    6.0
 #define DC_THRESH_TURBO                     5.9
 
 // For RPM sensor configuration
@@ -37,23 +40,45 @@
 extern DRIVER_TX_MOTORIO_DIRECTION_t motor_msg;
 extern QueueHandle_t g_adc_result_queue;
 
-float dc_stop = 7.0;
-float dc_slow = 6.35;
-float dc_normal = 6.28;
-float dc_turbo = 6.20;
+static float dc_stop = 7.0;
+static float dc_slow = 6.35;
+static float dc_normal = 6.28;
+static float dc_turbo = 6.20;
 
-bool white_mark = false;
-int white_mark_count = 0;
-int check_time = 0;
-float speed_factor = DC_STOP;
-int desired_count = 0;
-int dc_slow_count = 3;
-int dc_normal_count = 4;
-int dc_turbo_count = 5;
-
+static bool rpm_state = true;
+static bool white_mark = false;
+static bool switch_pressed = false;
+static int white_mark_count = 0;
+static int check_time = 0;
+static float speed_factor = DC_STOP;
+static int desired_count = 0;
+static int dead_count = 0;
+int dc_slow_count = 2;
+int dc_normal_count = 3;
+int dc_turbo_count = 4;
 int light_threshold = 1900;
 //As per waveform and real testing(percent range - 6.0(right) - 7.5(center) - 9.3(left))
 //As per waveform only(percent range - 5.5(forward) - 8.5(stop) - 10.5(backward))
+
+static void dc_check(void);
+static void servo_check(void);
+static void toggle_rpm_state(void);
+static void decrease_speed(float& sf,float& ds);
+static void increase_speed(float& sf,float& ds);
+static bool check_validity_speed_factor(float s_factor, int speed );
+
+static void toggle_rpm_state(void){
+    static int toggle_rpm_count=0;
+    if(toggle_rpm_count%2){
+        rpm_state = true;
+        LE.on(RPM_LED);
+    }
+    else{
+        rpm_state = false;
+        LE.off(RPM_LED);
+    }
+    toggle_rpm_count++;
+}
 
 void rpm_init(void)
 {
@@ -64,6 +89,10 @@ void rpm_init(void)
 void motor_init(void)
 {
 
+#if SWITCH_FEEDBACK
+    SW.init();
+#endif
+
     LD.init();
     int c=0;
     float factor = 5.5;
@@ -73,14 +102,14 @@ void motor_init(void)
     while(factor<9.3)
     {
         MotorControl.setServo(factor);
-        factor+=0.1;
+        factor += 0.1;
         delay_ms(50);
     }
 
     while(factor>5.5)
     {
         MotorControl.setServo(factor);
-        factor-=0.1;
+        factor -= 0.1;
         delay_ms(50);
     }
     MotorControl.setServo(STRAIGHT); // Set servo straight again
@@ -92,16 +121,24 @@ void motor_init(void)
         c++;
     }
     rpm_init();
-
     printf("motor_init is done\n");
 }
 
 void set_motors_pwm(void)
 {
-
     motor_direction md; // Copy received CAN msg into proper data structure
     md.turn = motor_msg.MOTORIO_DIRECTION_turn_cmd;
     md.speed = motor_msg.MOTORIO_DIRECTION_speed_cmd;
+
+    #if SWITCH_FEEDBACK
+        if( SW.getSwitch(3) && (!switch_pressed) ) {
+            toggle_rpm_state();
+            switch_pressed = true;
+        }
+        else if( (!SW.getSwitch(3)) && switch_pressed ){
+            switch_pressed = false;
+        }
+    #endif
 
 #if SERVO_ON
     if (md.turn == left)
@@ -156,55 +193,64 @@ void set_motors_pwm(void)
 /////////////////////////////////////////////Speed Encoder////////////////////////////////////////////////////////
     // XXX: Create a "bypass" logic to immediately slow down if needed
 #if SPEED_FEEDBACK
-    if (check_time > 1000)
+    if (check_time > 1000 && rpm_state)
     {
         check_time = 0;
-        switch ((int) md.speed)
+        if(white_mark_count==0 && md.speed != stop){
+            dead_count++;
+        }
+        else
+            dead_count = 0;
+
+        if(dead_count<RPM_DEAD_SECOND_COUNT)
         {
+            switch ((int) md.speed)
+            {
 
-            case stop:
-                // Do nothing
-                break;
+                case stop:
+                    // Do nothing
+                    break;
 
-            case slow:
-                if (desired_count > white_mark_count)
-                { // If car's speed is less than desired slow speed
-                    increase_speed(speed_factor,dc_slow);
-                }
-                else if (desired_count < white_mark_count)
-                { // If car's speed is greater than desired slow speed
-                    decrease_speed(speed_factor,dc_slow);
-                }
-                break;
+                case slow:
+                    if (desired_count > white_mark_count)
+                    { // If car's speed is less than desired slow speed
+                        increase_speed(speed_factor,dc_slow);
+                    }
+                    else if (desired_count < white_mark_count)
+                    { // If car's speed is greater than desired slow speed
+                        decrease_speed(speed_factor,dc_slow);
+                    }
+                    break;
 
-            case normal:
-                if (desired_count > white_mark_count)
-                { // If car's speed is less than desired normal speed
-                    increase_speed(speed_factor,dc_normal);
-                }
-                else if (desired_count < white_mark_count)
-                { // If car's speed is greater than desired normal speed
-                    decrease_speed(speed_factor,dc_normal);
-                }
-                break;
+                case normal:
+                    if (desired_count > white_mark_count)
+                    { // If car's speed is less than desired normal speed
+                        increase_speed(speed_factor,dc_normal);
+                    }
+                    else if (desired_count < white_mark_count)
+                    { // If car's speed is greater than desired normal speed
+                        decrease_speed(speed_factor,dc_normal);
+                    }
+                    break;
 
-            case turbo:
-                if (desired_count > white_mark_count)
-                { // If car's speed is less than desired turbo speed
-                    increase_speed(speed_factor,dc_turbo);
-                }
-                else if (desired_count < white_mark_count)
-                { // If car's speed is greater than desired turbo speed
-                    decrease_speed(speed_factor,dc_turbo);
-                }
-                break;
+                case turbo:
+                    if (desired_count > white_mark_count)
+                    { // If car's speed is less than desired turbo speed
+                        increase_speed(speed_factor,dc_turbo);
+                    }
+                    else if (desired_count < white_mark_count)
+                    { // If car's speed is greater than desired turbo speed
+                        decrease_speed(speed_factor,dc_turbo);
+                    }
+                    break;
+            }
         }
         white_mark_count = 0;
     }
 #endif
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    if (check_validity_speed_factor(speed_factor, (int) md.speed) || 1)
+    if (check_validity_speed_factor(speed_factor, (int) md.speed) && dead_count<RPM_DEAD_SECOND_COUNT)
     {
         MotorControl.setDC(speed_factor);
     }
@@ -245,40 +291,45 @@ void check_rpm(void)
     {
         white_mark = false;
     }
-    check_time += 1;                                // Increment check_time by 1 to
+    check_time += 1;                                // Increment check_time by 1
     // start_conversion()
     my_adc0_start_conversion(LIGHT_SENSOR_CHANNEL);
 }
 
-bool check_validity_speed_factor(float s_factor, int speed)
+static bool check_validity_speed_factor(float s_factor, int speed)
 {
+    bool valid = false;
     switch (speed)
     {
         case slow:
-            if (s_factor > DC_THRESH_SLOW)
-                return false;
+            if (s_factor < DC_THRESH_SLOW)
+                valid = false;
             else
-                return true;
+                valid = true;
             break;
 
         case normal:
-            if (s_factor > DC_THRESH_NORMAL)
-                return false;
+            if (s_factor < DC_THRESH_NORMAL)
+                valid = false;
             else
-                return true;
+                valid = true;
             break;
 
         case turbo:
-            if (s_factor > DC_THRESH_TURBO)
-                return false;
+            if (s_factor < DC_THRESH_TURBO)
+                valid = false;
             else
-                return true;
+                valid = true;
+            break;
+
+        case stop:
+            valid = true;
             break;
     }
-    return true;
+    return valid;
 }
 
-void decrease_speed(float& sf,float& ds) {              // sf - speed_factor , ds - dc_speed
+static void decrease_speed(float& sf,float& ds) {              // sf - speed_factor , ds - dc_speed
     int difference = white_mark_count - desired_count;
     if (difference < 3)
     {
@@ -297,7 +348,7 @@ void decrease_speed(float& sf,float& ds) {              // sf - speed_factor , d
     }
 }
 
-void increase_speed(float& sf,float& ds) {              // sf - speed_factor , ds - dc_speed
+static void increase_speed(float& sf,float& ds) {              // sf - speed_factor , ds - dc_speed
     int difference = desired_count - white_mark_count;
     if (difference < 3)
     {
@@ -316,4 +367,39 @@ void increase_speed(float& sf,float& ds) {              // sf - speed_factor , d
     }
 }
 
+static void servo_check(void){
+    float factor = 5.5;
+    MotorControl.setServo(STRAIGHT);
+    delay_ms(100);
 
+    while(factor<9.3)
+    {
+        MotorControl.setServo(factor);
+        factor += 0.1;
+        delay_ms(50);
+    }
+
+    while(factor>5.5)
+    {
+        MotorControl.setServo(factor);
+        factor -= 0.1;
+        delay_ms(50);
+    }
+    MotorControl.setServo(STRAIGHT); // Set servo straight again
+}
+
+static void dc_check(void){
+    MotorControl.setDC(6.10);
+    delay_ms(5000);
+    MotorControl.setDC(DC_STOP);
+    delay_ms(2000);
+    MotorControl.setDC(7.6);
+    delay_ms(5000);
+    MotorControl.setDC(DC_STOP);
+    delay_ms(2000);
+}
+
+void motor_check(void) {
+    servo_check();
+    dc_check();
+}

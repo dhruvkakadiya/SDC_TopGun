@@ -70,7 +70,7 @@ void TIMER2_IRQHandler(void) ALIAS(isr_default_handler);
 void TIMER3_IRQHandler(void) ALIAS(isr_default_handler);
 void UART0_IRQHandler(void)  ALIAS(isr_default_handler);
 void UART1_IRQHandler(void)  ALIAS(isr_default_handler);
-void UART2_IRQHandler(void)  ALIAS(isr_default_handler);
+void UART2_IRQHandle(void)  ALIAS(isr_default_handler);
 void UART3_IRQHandler(void)  ALIAS(isr_default_handler);
 void PWM1_IRQHandler(void)   ALIAS(isr_default_handler);
 void I2C0_IRQHandler(void)   ALIAS(isr_default_handler);
@@ -301,7 +301,7 @@ static isr_func_t g_isr_array[] = {
         TIMER3_IRQHandler,      // 20, 0x50 - TIMER3
         UART0_IRQHandler,       // 21, 0x54 - UART0
         UART1_IRQHandler,       // 22, 0x58 - UART1
-        UART2_IRQHandler,       // 23, 0x5c - UART2
+        UART2_IRQHandle,       // 23, 0x5c - UART2
         UART3_IRQHandler,       // 24, 0x60 - UART3
         PWM1_IRQHandler,        // 25, 0x64 - PWM1
         I2C0_IRQHandler,        // 26, 0x68 - I2C0
@@ -345,7 +345,7 @@ extern "C" void isr_register(IRQn_Type num, void (*isr_func_ptr) (void))
 /**
  * This is the common IRQ handler for the chip (or peripheral) interrupts.  We have this
  * common IRQ here to allow more flexibility for the user to register their interrupt.
- * User can either override the aliased IRQ handler, or use the isr_register() API to
+ * User can either override the aliased IRQ handler, or use the () API to
  * register it any of their own functions during runtime.
  */
 static void isr_forwarder_routine(void)

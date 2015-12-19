@@ -5,7 +5,6 @@
  *      Author: Akshay Vijaykumar
  */
 
-
 #include <stdlib.h>             // strtof()
 #include "imu.hpp"
 #include "io.hpp"
@@ -26,7 +25,7 @@
  */
 imu::imu():
     imuUart(Uart3::getInstance()),
-    imuResetPin(P2_5),
+    imuResetPin(P2_2),
     readYawCommand{'#', 'f'},
     imu_old_heading(0.0),
         err_count(0),
@@ -40,7 +39,7 @@ imu::imu():
     // Initialize Uart3
     if( !(imuUart.init(IMU_UART_BAUDRATE, IMU_UART_RX_QUEUE_SIZE, IMU_UART_TX_QUEUE_SIZE)) )
     {
-        LOG_ERROR("IMU Uart Init Failed");
+      //  LOG_ERROR("IMU Uart Init Failed");
     }
     else
     {
@@ -173,18 +172,18 @@ float imu::getHeading( void )
     {
         if( err_count > IMU_ERR_BACKOFF_COUNT )
         {
-           LOG_ERROR("CRITICAL ERROR!!!! IMU not responsive\n");
+         //  LOG_ERROR("CRITICAL ERROR!!!! IMU not responsive\n");
             return -IMU_ERR;
         }
 
-        LOG_ERROR("ERROR!!! Cannot get IMU value\n");
+       // LOG_ERROR("ERROR!!! Cannot get IMU value\n");
         err_count++;
 
         // If the error_count exceeds threshold, report externally
         if( err_count > IMU_ERR_MAX_COUNT)
         {
             LE.on(1);
-            LOG_ERROR("IMU not responsive. Requesting reset\n");
+         //   LOG_ERROR("IMU not responsive. Requesting reset\n");
             resetIMU();
         }
 
@@ -206,7 +205,7 @@ float imu::getHeading( void )
         imu_old_heading = imu_heading;
 
     }
-
+  //  printf("%f------>\n", imu_heading);
     return imu_heading;
 }
 
@@ -232,7 +231,21 @@ bool IMUTask::run(void *p)
             CUSTOM_DEBUG("IMUTask : Read fail");
         }
     }
+    uint16_t imu_heading = 0;       // 2-byte angle between 0 and 360. Compromise with precision
+    imu_heading = static_cast<uint16_t>(IMUInterface.getHeading());
 
+#if 0
+        if(imu_heading  > (360 - HEADING_OFFSET) && imu_heading <= 360)
+        {
+            imu_heading = HEADING_OFFSET - (360 - (imu_heading));
+        }
+        else
+        {
+            imu_heading = imu_heading + HEADING_OFFSET;
+        }
+#endif
+
+        //  printf("\nIMU: %d", imu_heading);
     // This task should now sleep for 50ms.
     vTaskDelayMs(IMUTASK_DELAY);
 

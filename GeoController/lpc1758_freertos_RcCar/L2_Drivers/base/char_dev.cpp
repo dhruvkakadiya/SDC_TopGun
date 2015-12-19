@@ -28,7 +28,7 @@
 #include "char_dev.hpp"
 #include "utilities.h"      // system_get_timer_ms();
 
-
+char* temp = NULL;
 
 bool CharDev::put(const char* pString, unsigned int timeout)
 {
@@ -75,6 +75,47 @@ bool CharDev::gets(char* pBuff, int maxLen, unsigned int timeout)
         *pBuff = '\0';
     }
 
+    return success;
+}
+
+bool CharDev::mygets(char* pBuff, int maxLen, unsigned int timeout)
+{
+    char c = 0;
+   static int charCount = 0;
+    bool success = false;
+    static bool flag = false;
+
+    if(!flag){
+    temp = pBuff;
+    flag = true;
+    }
+
+    int myint = 10;
+    while(getChar(&c, timeout) && myint--) {
+        if ('\r' != c && '\n' != c) {
+            // *pBuff++ = c;
+            *temp++ = c;
+        }
+        if(++charCount >= maxLen) {
+            charCount = 0;
+            flag = false;
+            *temp = '\0';
+            break;
+        }
+        if('\n' == c) {
+            flag = false;
+            charCount =0;
+            success = true;
+            *temp = '\0';
+            break;
+        }
+    }
+
+    // If we didn't get any characters, don't null terminate the string
+    if(charCount > 0) {
+        //*temp = '\0';
+    }
+    //temp = NULL;
     return success;
 }
 

@@ -7,7 +7,7 @@
 
     <fragment xmlns:android="http://schemas.android.com/apk/res/android"
             xmlns:tools="http://schemas.android.com/tools"
-            android:layout_height="415dp"
+            android:layout_height="405dp"
             android:layout_width = "match_parent"
             android:id="@+id/map"
             tools:context=".MapsActivity"
@@ -23,12 +23,57 @@
 
             <Button
                 style="?android:buttonBarButtonStyle"
+                android:layout_width="100dp"
+                android:layout_height="wrap_content"
+                android:text="Start Car"
+                android:id="@+id/btnOn"
+                android:layout_alignParentTop="true"
+                android:layout_centerHorizontal="true"
+                android:layout_column="0" />
+
+            <Button
+                style="?android:buttonBarButtonStyle"
                 android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Stop Car"
+                android:id="@+id/btnOff"
+                android:layout_alignParentTop="true"
+                android:layout_centerHorizontal="true"
+                android:layout_column="1" />
+
+            <Button
+                android:layout_width="80dp"
+                android:layout_height="wrap_content"
+                android:text="@string/clearButton"
+                android:id="@+id/clearButton"
+                style="?android:buttonBarButtonStyle"
+                android:layout_alignParentTop="true"
+                android:layout_centerHorizontal="true"
+                android:layout_column="2" />
+
+            <Button
+                style="?android:buttonBarButtonStyle"
+                android:layout_width="50dp"
                 android:layout_height="wrap_content"
                 android:text="On"
                 android:id="@+id/btOn"
                 android:layout_alignParentTop="true"
-                android:layout_centerHorizontal="true" />
+                android:layout_centerHorizontal="true"
+                android:layout_column="3" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:text="v0.1"
+                android:id="@+id/textView"
+                android:layout_column="6" />
+
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
 
             <Button
                 style="?android:buttonBarButtonStyle"
@@ -50,45 +95,32 @@
 
             <Button
                 style="?android:buttonBarButtonStyle"
-                android:layout_width="wrap_content"
+                android:layout_width="50dp"
                 android:layout_height="wrap_content"
                 android:text="Send Route"
-                android:id="@+id/sndrt" />
-
-        </TableRow>
-
-        <TableRow
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
+                android:id="@+id/sndrt"
+                android:layout_column="2" />
 
             <Button
                 style="?android:buttonBarButtonStyle"
-                android:layout_width="wrap_content"
+                android:layout_width="50dp"
                 android:layout_height="wrap_content"
-                android:text="Start Car"
-                android:id="@+id/btnOn"
-                android:layout_alignParentTop="true"
-                android:layout_centerHorizontal="true" />
+                android:text="Car Loc"
+                android:id="@+id/carLoc"
+                android:layout_column="3"
+                android:layout_span="4" />
 
-            <Button
-                style="?android:buttonBarButtonStyle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Stop Car"
-                android:id="@+id/btnOff"
-                android:layout_alignParentTop="true"
-                android:layout_centerHorizontal="true" />
-
-            <Button
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/clearButton"
-                android:id="@+id/clearButton"
-                style="?android:buttonBarButtonStyle"
-                android:layout_alignParentTop="true"
-                android:layout_centerHorizontal="true" />
         </TableRow>
     </TableLayout>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="Received Data"
+        android:id="@+id/txt"
+        android:layout_gravity="right"
+        android:hint="Received Data" />
 
 </LinearLayout>
 

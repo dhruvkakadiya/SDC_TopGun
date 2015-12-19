@@ -50,6 +50,11 @@ static uint64_t calculateDistance(geo_loc *geo_location_ref);
 
 static bool bus_off_status = false;
 
+#if NAVIGATION_DEBUG
+// Only for Navigation Debug
+bool nav_debug_flag = false;
+#endif
+
 bool master_controller_init()
 {
 
@@ -599,7 +604,7 @@ bool avoid_obstacle(void)
         return false;
 
         //motor_data.turn = (uint8_t) STRAIGHT;
-        //motor_data.speed = (uint8_t) NORMAL;
+        //motor_data.speed = (uint8_t) SLOW;
     }
 
 #endif
@@ -743,6 +748,30 @@ bool update_from_app(void)
     can_fullcan_msg_t *can_msg_app_ptr = NULL;
     can_fullcan_msg_t can_msg_app_data;
 
+#if NAVIGATION_DEBUG
+    if(nav_debug_flag)
+    {
+        command_from_app = false;
+        nav_debug_flag = false;
+
+        // Send Stop Command over CAN to Motor in case command_from_app is false
+        motor_direction motor_data;
+        can_msg_t can_motor_msg;
+
+        motor_data.speed = STOP;
+        motor_data.turn = STRAIGHT;
+
+        can_motor_msg.msg_id = MOTOR_DIRECTIONS_ID;
+        can_motor_msg.frame_fields.is_29bit = false;
+        can_motor_msg.frame_fields.data_len = sizeof(motor_direction);
+        memcpy(&can_motor_msg.data.qword, &motor_data, sizeof(can_motor_msg));
+
+        CAN_tx(MASTER_CNTL_CANBUS, &can_motor_msg, MASTER_CNTL_CAN_DELAY);
+
+        return command_from_app;
+    }
+#endif
+
     // Temporary App is sent via the Kill Switch Message ID
     can_msg_app_ptr = CAN_fullcan_get_entry_ptr(can_id_kill);
 
@@ -815,6 +844,8 @@ bool navigation_mode(void)
         memcpy(&can_loc_ack_msg.data.qword, &ack_data, sizeof(ack_data));
 
         CAN_tx(MASTER_CNTL_CANBUS, &can_loc_ack_msg, MASTER_CNTL_CAN_DELAY);
+
+        printf("Received new request from BT. ACKING!!\n");
 
         // Start receiving new locations
         nav_status = RX_CHKPTS;
@@ -895,8 +926,10 @@ void navigate_to_next_chkpt( void )
     int32_t difference_heading_bearing = 0;
     ZONE_NAVI navigation_zone;
 
-    motor_direction motor_data;
+    static motor_direction motor_data;
     can_msg_t can_msg_motor_data;
+
+    uint32_t dist_range = MIN_DISTANCE_TO_CHKPT;
 
     geo_spd_angle* heading_bearing_ptr;
     geo_loc *location_msg = NULL;
@@ -910,12 +943,14 @@ void navigate_to_next_chkpt( void )
         // We have reached the destination
         nav_status = STOPPED;
         nav_index = 0;
+        LD.setNumber(99);
     }
 
     else
     {
+#if DEBUG
         printf("Current Checkpoint: LAT %f, LONG %f\n", lat_array[nav_index], long_array[nav_index]);
-
+#endif
         // Check if checkpoint is reached
         // Get the GPS data from GEO controller
         can_msg_geoloc_ptr = CAN_fullcan_get_entry_ptr(can_id_loc_data);
@@ -931,7 +966,6 @@ void navigate_to_next_chkpt( void )
                 // Stop navigation - Tell the motor driver to stop
                 nav_status = PAUSED;
             }
-
         }
 
         else
@@ -943,7 +977,12 @@ void navigate_to_next_chkpt( void )
             location_msg = (geo_loc *)&(can_msg_geoloc_data.data.qword);
             uint64_t dist_meters = calculateDistance(location_msg);
 
-            if( dist_meters <= MIN_DISTANCE_TO_CHKPT )
+            if( (nav_index == 0) || ( nav_index == total_chk_pts - 1 ) )
+            {
+                dist_range = FULL_PRECISION_RANGE;
+            }
+
+            if( dist_meters <= dist_range )
             {
                 // Increment index and issue next check-point
                 nav_index++;
@@ -963,6 +1002,11 @@ void navigate_to_next_chkpt( void )
                     memcpy(&can_loc_update_msg.data.qword, &next_loc, sizeof(next_loc));
 
                     CAN_tx(MASTER_CNTL_CANBUS, &can_loc_update_msg, MASTER_CNTL_CAN_DELAY);
+
+#if NAVIGATION_DEBUG
+                    nav_debug_flag = true;
+#endif
+
                 }
             }
         }
@@ -1083,15 +1127,15 @@ void navigate_to_next_chkpt( void )
             break;
     }
 
-    if(mia_count_navigating == 0)
-    {
+    //if(mia_count_navigating == 0)
+    //{
        can_msg_motor_data.msg_id = MOTOR_DIRECTIONS_ID;
        can_msg_motor_data.frame_fields.is_29bit = false;
        can_msg_motor_data.frame_fields.data_len = sizeof(motor_direction);
        memcpy(&can_msg_motor_data.data.qword, &motor_data, sizeof(motor_direction));
 
        CAN_tx(MASTER_CNTL_CANBUS, &can_msg_motor_data, MASTER_CNTL_CAN_DELAY);
-    }
+    //}
 }
 
 ZONE_NAVI getNavigationZone(uint32_t difference) {

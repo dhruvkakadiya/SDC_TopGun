@@ -45,13 +45,11 @@ extern "C"{
 void set_motors_pwm(void);
 void motor_init(void);
 void rpm_init(void);
+void motor_check(void);
 void drive_TopGun(void);
 void motor_send_heartbeat(void);
 void motor_check_master_reset(void);
 void check_rpm(void);
-bool check_validity_speed_factor(float s_factor, int speed );
-void decrease_speed(float& sf,float& ds);
-void increase_speed(float& sf,float& ds);
 
 #ifdef __cplusplus
 }

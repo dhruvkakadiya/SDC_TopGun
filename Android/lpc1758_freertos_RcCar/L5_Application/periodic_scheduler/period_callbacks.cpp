@@ -29,6 +29,7 @@
  */
 
 #include <stdint.h>
+#include "stdio.h"
 #include "io.hpp"
 #include "periodic_callback.h"
 #include "can.h"
@@ -40,16 +41,19 @@
 extern bool can_bus_off_flag;
 extern can_msg_t bt_can_hb;
 extern float way_pt_array[100];
+float geo_data_arr[2];
 extern uint8_t way_pt_num;
 can_msg_t waypt_ack_mssg;
+can_msg_t geo_data_msg;
 bool waypt_ack = false;
 bool data_send_flag = false;
 int bt_send_loop = 0;
+extern can_msg_t can_mssg_bt;
 extern chk_point_data *waypt_ptr;
+geo_loc *geo_ptr;
 
 /// This is the stack size used for each of the period tasks
 const uint32_t PERIOD_TASKS_STACK_SIZE_BYTES = (512 * 4);
-
 
 void period_1Hz(void)
 {
@@ -62,6 +66,10 @@ void period_1Hz(void)
         {
             CAN_tx(can_controller,&bt_can_hb,BT_CAN_HB_WAIT);
         }
+           geo_ptr = (geo_loc*)&(geo_data_msg.data.bytes[0]);
+           CAN_rx(can_controller, &geo_data_msg, 0);
+           geo_data_arr[0] = geo_ptr->latitude;
+           geo_data_arr[1] = geo_ptr->longitude;
 
 }
 
@@ -73,11 +81,13 @@ void period_10Hz(void)
         {
             if((waypt_ack_mssg.msg_id == CHECKPOINT_REQ_ID) && (waypt_ack_mssg.data.bytes[0] == 1))
             {
+                PRINT("\nACK RECEIVED");
                 waypt_ack = true;
                 data_send_flag = true;
+                bt_send_loop = 0;
             }
         }
-    }
+     }
     else if(data_send_flag)
     {
         if(bt_send_loop < (way_pt_num * 2))
@@ -85,6 +95,13 @@ void period_10Hz(void)
             waypt_ptr->latitude = way_pt_array[bt_send_loop];
             waypt_ptr->longitude = way_pt_array[bt_send_loop + 1];
             bt_send_loop += 2;
+            CAN_tx(can_controller, &can_mssg_bt, 0);
+            PRINT("\nway pt data sent");
+            }
+        else
+        {
+            data_send_flag = false;
+            waypt_ack = false;
         }
     }
 }

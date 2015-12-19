@@ -202,7 +202,7 @@ int output_format = OUTPUT__FORMAT_TEXT;
   #define OUTPUT__STARTUP_STREAM_ON false  // true or false
 #else
 // Select if serial continuous streaming output is enabled per default on startup.
-#define OUTPUT__STARTUP_STREAM_ON true  // true or false
+#define OUTPUT__STARTUP_STREAM_ON false  // true or false
 #endif
 
 // If set true, an error message will be output if we fail to read sensor data.
@@ -227,21 +227,21 @@ boolean output_errors = false;  // true or false
 // Put MIN/MAX and OFFSET readings for your board here!
 // Accelerometer
 // "accel x,y,z (min/max) = X_MIN/X_MAX  Y_MIN/Y_MAX  Z_MIN/Z_MAX"
-#define ACCEL_X_MIN ((float) -250)
-#define ACCEL_X_MAX ((float) 250)
-#define ACCEL_Y_MIN ((float) -250)
-#define ACCEL_Y_MAX ((float) 250)
-#define ACCEL_Z_MIN ((float) -250)
-#define ACCEL_Z_MAX ((float) 250)
+#define ACCEL_X_MIN ((float) -274)
+#define ACCEL_X_MAX ((float) 293)
+#define ACCEL_Y_MIN ((float) -279)
+#define ACCEL_Y_MAX ((float) 253)
+#define ACCEL_Z_MIN ((float) -256)
+#define ACCEL_Z_MAX ((float) 259)
 
 // Magnetometer (standard calibration mode)
 // "magn x,y,z (min/max) = X_MIN/X_MAX  Y_MIN/Y_MAX  Z_MIN/Z_MAX"
-#define MAGN_X_MIN ((float) -600)
-#define MAGN_X_MAX ((float) 600)
-#define MAGN_Y_MIN ((float) -600)
-#define MAGN_Y_MAX ((float) 600)
-#define MAGN_Z_MIN ((float) -600)
-#define MAGN_Z_MAX ((float) 600)
+#define MAGN_X_MIN ((float) -564)
+#define MAGN_X_MAX ((float) 656)
+#define MAGN_Y_MIN ((float) -585)
+#define MAGN_Y_MAX ((float) 635)
+#define MAGN_Z_MIN ((float) -550)
+#define MAGN_Z_MAX ((float) 564)
 
 // Magnetometer (extended calibration mode)
 // Uncommend to use extended magnetometer calibration (compensates hard & soft iron errors)
@@ -251,9 +251,9 @@ boolean output_errors = false;  // true or false
 
 // Gyroscope
 // "gyro x,y,z (current/average) = .../OFFSET_X  .../OFFSET_Y  .../OFFSET_Z
-#define GYRO_AVERAGE_OFFSET_X ((float) 0.0)
-#define GYRO_AVERAGE_OFFSET_Y ((float) 0.0)
-#define GYRO_AVERAGE_OFFSET_Z ((float) 0.0)
+#define GYRO_AVERAGE_OFFSET_X ((float) -27.98)
+#define GYRO_AVERAGE_OFFSET_Y ((float) 100.51)
+#define GYRO_AVERAGE_OFFSET_Z ((float) -5.85)
 
 /*
 // Calibration example:
@@ -337,14 +337,17 @@ const float magn_ellipsoid_transform[3][3] = {{0.902, -0.00354, 0.000636}, {-0.0
 
 
 // Gain for gyroscope (ITG-3200)
-#define GYRO_GAIN 0.06957 // Same gain on all axes
+#define GYRO_GAIN 0.06957//0.06957 // Same gain on all axes
 #define GYRO_SCALED_RAD(x) (x * TO_RAD(GYRO_GAIN)) // Calculate the scaled gyro readings in radians per second
+//#define GYRO_SCALED_X(x) (x*TO_RAD(GYRO_GAIN))
+//#define GYRO_SCALED_Y(x) (x*TO_RAD(GYRO_GAIN))
+//#define GYRO_SCALED_Z(x) (x*TO_RAD(GYRO_GAIN))
 
 // DCM parameters
-#define Kp_ROLLPITCH 0.02f
-#define Ki_ROLLPITCH 0.00002f
-#define Kp_YAW 1.2f
-#define Ki_YAW 0.00002f
+#define Kp_ROLLPITCH 0.02f//0.02f
+#define Ki_ROLLPITCH 0.00002f//0.00002f
+#define Kp_YAW 1.2f//1.2f
+#define Ki_YAW 0.00002f//0.00002f
 
 // Stuff
 #define STATUS_LED_PIN 13  // Pin number of status LED

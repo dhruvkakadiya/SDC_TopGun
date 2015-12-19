@@ -46,6 +46,7 @@ uint8_t way_pt[2];
 chk_point_data *waypt_ptr;
 bool sync_stat = false;
 bool kill_car = true;
+extern float geo_data_arr[2];
 
 /**
  * The main() creates tasks or "threads".  See the documentation of scheduler_task class at scheduler_task.hpp
@@ -93,6 +94,8 @@ class bt_uart_task : public scheduler_task
            Uart3 &bt_uart = Uart3::getInstance();
            bool uart_stat = false;
 
+//wait for data from android app
+
            uart_stat = bt_uart.gets(bt_str, bt_data_len, portMAX_DELAY );
 
            if(uart_stat)
@@ -121,6 +124,21 @@ class bt_uart_task : public scheduler_task
                    kill_mssg.msg_id = KILL_SWITCH_ID;
                    kill_mssg.frame_fields.data_len = 8;
                    kill_mssg.frame_fields.is_29bit = 0;
+
+                   char start_loc_ptr[15];
+                   PRINT("\nLAT BEFORE SEND IS %F",geo_data_arr[0]);
+                   sprintf(start_loc_ptr, "%f",geo_data_arr[0]);
+                   puts("\n lat after send");
+                   puts(start_loc_ptr);
+                   bt_uart.put(start_loc_ptr);
+                   bt_uart.put("\n\r");
+
+                   PRINT("\nLONG BEFORE SEND IS %F",geo_data_arr[1]);
+                   sprintf(start_loc_ptr, "%f",geo_data_arr[1]);
+                   puts("\nlong after send");
+                   puts(start_loc_ptr);
+                   bt_uart.put(start_loc_ptr);
+                   bt_uart.put("\n\r");
 
                    if(kill_car == false)
                        kill_mssg.data.qword = start_car_mssg;

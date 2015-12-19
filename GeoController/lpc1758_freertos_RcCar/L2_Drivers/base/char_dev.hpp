@@ -81,7 +81,7 @@ class CharDev
          * @param timeout The timeout in ticks to wait
          */
         bool gets(char* pBuff, int maxLen, unsigned int timeout=0xffffffff);
-
+        bool mygets(char* pBuff, int maxLen, unsigned int timeout = 0xffffffff);
         /**
          * Just like printf, except it will print to this output interface
          * @returns the number of characters printed

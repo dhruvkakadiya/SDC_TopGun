@@ -39,10 +39,12 @@ things to consider-
 - Added a Method that checks if phone is connected to the internet
 - puts intermediate points on the map. Can be controlled by means of a simple filter. 
 
-things to consider-
-- Use elevations api?
-- Roads API and Breadcrumbs?
-- make the filter more robust
-- add a app toolbar for better UX
-- integrate with anush's bluetooth part of the map?
+"Car Location to Destination"
+- Location Button is now enabled only when the start button is clicked.
+- Start Button click triggers an event which results in the position of the car being placed in the CarSoure variable of type LatLng.
+- slight modifications to the MarkerPoints array which just requires a single point on the screen.
+- Tested with sample co-ordinates.
 
+Things to consider- 
+- Field testing
+- Ironing out the bugs
