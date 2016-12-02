@@ -1,5 +1,4 @@
-# Self Driving Car TopGun
-Self driving car with 5 CAN bus nodes.
+# Self-Driving RC Car TopGun
 This project contains 5 different controller codes for different functionality.
 1) Master controller
 2) Sensor Controller
